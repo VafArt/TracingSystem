@@ -7,9 +7,6 @@ namespace TracingSystem
         public MainForm()
         {
             InitializeComponent();
-            toolStrip1.AutoSize = false;
-            toolStrip1.ImageScalingSize = new Size((int)CreateGraphics().DpiX, (int)CreateGraphics().DpiY);
-            toolStrip1.AutoSize = true;
         }
 
         private void workSpace_MouseMove(object sender, MouseEventArgs e)
