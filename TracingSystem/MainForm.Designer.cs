@@ -40,6 +40,7 @@
             this.addMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.addElementMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.addTraceMenu = new System.Windows.Forms.ToolStripMenuItem();
+            this.открытьФайлPCBLIBToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.removeMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.removeElementMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.removeTraceMenu = new System.Windows.Forms.ToolStripMenuItem();
@@ -58,7 +59,6 @@
             this.statusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
             this.workSpace = new System.Windows.Forms.PictureBox();
-            this.открытьФайлPCBLIBToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.toolStrip1.SuspendLayout();
             this.status.SuspendLayout();
@@ -93,19 +93,19 @@
             // openProjectMenu
             // 
             this.openProjectMenu.Name = "openProjectMenu";
-            this.openProjectMenu.Size = new System.Drawing.Size(359, 44);
+            this.openProjectMenu.Size = new System.Drawing.Size(263, 44);
             this.openProjectMenu.Text = "Открыть";
             // 
             // createProjectMenu
             // 
             this.createProjectMenu.Name = "createProjectMenu";
-            this.createProjectMenu.Size = new System.Drawing.Size(359, 44);
+            this.createProjectMenu.Size = new System.Drawing.Size(263, 44);
             this.createProjectMenu.Text = "Создать";
             // 
             // saveProjectMenu
             // 
             this.saveProjectMenu.Name = "saveProjectMenu";
-            this.saveProjectMenu.Size = new System.Drawing.Size(359, 44);
+            this.saveProjectMenu.Size = new System.Drawing.Size(263, 44);
             this.saveProjectMenu.Text = "Сохранить";
             // 
             // projectDetailsMenu
@@ -151,6 +151,12 @@
             this.addTraceMenu.Size = new System.Drawing.Size(382, 44);
             this.addTraceMenu.Text = "Добавить трассу";
             // 
+            // открытьФайлPCBLIBToolStripMenuItem
+            // 
+            this.открытьФайлPCBLIBToolStripMenuItem.Name = "открытьФайлPCBLIBToolStripMenuItem";
+            this.открытьФайлPCBLIBToolStripMenuItem.Size = new System.Drawing.Size(382, 44);
+            this.открытьФайлPCBLIBToolStripMenuItem.Text = "Открыть файл PCBLIB";
+            // 
             // removeMenu
             // 
             this.removeMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -163,13 +169,13 @@
             // removeElementMenu
             // 
             this.removeElementMenu.Name = "removeElementMenu";
-            this.removeElementMenu.Size = new System.Drawing.Size(359, 44);
+            this.removeElementMenu.Size = new System.Drawing.Size(333, 44);
             this.removeElementMenu.Text = "Удалить элемент";
             // 
             // removeTraceMenu
             // 
             this.removeTraceMenu.Name = "removeTraceMenu";
-            this.removeTraceMenu.Size = new System.Drawing.Size(359, 44);
+            this.removeTraceMenu.Size = new System.Drawing.Size(333, 44);
             this.removeTraceMenu.Text = "Удалить трассу";
             // 
             // runMenu
@@ -306,16 +312,10 @@
             this.workSpace.TabStop = false;
             this.workSpace.MouseMove += new System.Windows.Forms.MouseEventHandler(this.workSpace_MouseMove);
             // 
-            // открытьФайлPCBLIBToolStripMenuItem
-            // 
-            this.открытьФайлPCBLIBToolStripMenuItem.Name = "открытьФайлPCBLIBToolStripMenuItem";
-            this.открытьФайлPCBLIBToolStripMenuItem.Size = new System.Drawing.Size(382, 44);
-            this.открытьФайлPCBLIBToolStripMenuItem.Text = "Открыть файл PCBLIB";
-            // 
             // MainForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoScaleDimensions = new System.Drawing.SizeF(192F, 192F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.ClientSize = new System.Drawing.Size(1427, 1028);
             this.Controls.Add(this.workSpace);
             this.Controls.Add(this.status);
