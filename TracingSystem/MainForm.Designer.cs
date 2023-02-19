@@ -50,7 +50,7 @@
             this.runTraceMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.runBundleMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.settingsMenu = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStrip1 = new System.Windows.Forms.ToolStrip();
+            this.toolStrip = new System.Windows.Forms.ToolStrip();
             this.saveTool = new System.Windows.Forms.ToolStripButton();
             this.addElementTool = new System.Windows.Forms.ToolStripButton();
             this.removeElementTool = new System.Windows.Forms.ToolStripButton();
@@ -65,7 +65,7 @@
             this.projectNameStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.workSpace = new System.Windows.Forms.PictureBox();
             this.menuStrip1.SuspendLayout();
-            this.toolStrip1.SuspendLayout();
+            this.toolStrip.SuspendLayout();
             this.status.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.workSpace)).BeginInit();
             this.SuspendLayout();
@@ -80,7 +80,7 @@
             this.runMenu});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1600, 42);
+            this.menuStrip1.Size = new System.Drawing.Size(1600, 40);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -95,7 +95,7 @@
             this.removeProjectMenu,
             this.closeProgramProjectMenu});
             this.projectMenu.Name = "projectMenu";
-            this.projectMenu.Size = new System.Drawing.Size(114, 38);
+            this.projectMenu.Size = new System.Drawing.Size(114, 36);
             this.projectMenu.Text = "Проект";
             // 
             // createProjectMenu
@@ -152,7 +152,7 @@
             this.projectDetailsMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.pcbDetailsMenu});
             this.projectDetailsMenu.Name = "projectDetailsMenu";
-            this.projectDetailsMenu.Size = new System.Drawing.Size(248, 38);
+            this.projectDetailsMenu.Size = new System.Drawing.Size(248, 36);
             this.projectDetailsMenu.Text = "Проектные данные";
             // 
             // pcbDetailsMenu
@@ -171,31 +171,31 @@
             this.removeTraceMenu,
             this.openPCBMenu});
             this.editMenu.Name = "editMenu";
-            this.editMenu.Size = new System.Drawing.Size(196, 38);
+            this.editMenu.Size = new System.Drawing.Size(196, 36);
             this.editMenu.Text = "Редактировать";
             // 
             // addElementMenu
             // 
             this.addElementMenu.Name = "addElementMenu";
-            this.addElementMenu.Size = new System.Drawing.Size(382, 44);
+            this.addElementMenu.Size = new System.Drawing.Size(397, 44);
             this.addElementMenu.Text = "Добавить элемент";
             // 
             // addTraceMenu
             // 
             this.addTraceMenu.Name = "addTraceMenu";
-            this.addTraceMenu.Size = new System.Drawing.Size(382, 44);
+            this.addTraceMenu.Size = new System.Drawing.Size(397, 44);
             this.addTraceMenu.Text = "Добавить трассу";
             // 
             // removeElementMenu
             // 
             this.removeElementMenu.Name = "removeElementMenu";
-            this.removeElementMenu.Size = new System.Drawing.Size(382, 44);
+            this.removeElementMenu.Size = new System.Drawing.Size(397, 44);
             this.removeElementMenu.Text = "Удалить элемент";
             // 
             // removeTraceMenu
             // 
             this.removeTraceMenu.Name = "removeTraceMenu";
-            this.removeTraceMenu.Size = new System.Drawing.Size(382, 44);
+            this.removeTraceMenu.Size = new System.Drawing.Size(397, 44);
             this.removeTraceMenu.Text = "Удалить трассу";
             // 
             // openPCBMenu
@@ -212,7 +212,7 @@
             this.runBundleMenu,
             this.settingsMenu});
             this.runMenu.Name = "runMenu";
-            this.runMenu.Size = new System.Drawing.Size(156, 38);
+            this.runMenu.Size = new System.Drawing.Size(156, 36);
             this.runMenu.Text = "Выполнить";
             // 
             // runTraceMenu
@@ -235,21 +235,21 @@
             this.settingsMenu.Text = "Настройка алгоритма...";
             this.settingsMenu.Click += new System.EventHandler(this.settingsMenu_Click);
             // 
-            // toolStrip1
+            // toolStrip
             // 
-            this.toolStrip1.ImageScalingSize = new System.Drawing.Size(32, 32);
-            this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStrip.ImageScalingSize = new System.Drawing.Size(32, 32);
+            this.toolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.saveTool,
             this.addElementTool,
             this.removeElementTool,
             this.addTraceTool,
             this.removeTraceTool,
             this.runTool});
-            this.toolStrip1.Location = new System.Drawing.Point(0, 42);
-            this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(1600, 42);
-            this.toolStrip1.TabIndex = 1;
-            this.toolStrip1.Text = "toolStrip1";
+            this.toolStrip.Location = new System.Drawing.Point(0, 40);
+            this.toolStrip.Name = "toolStrip";
+            this.toolStrip.Size = new System.Drawing.Size(1600, 42);
+            this.toolStrip.TabIndex = 1;
+            this.toolStrip.Text = "toolStrip1";
             // 
             // saveTool
             // 
@@ -373,7 +373,7 @@
             this.ClientSize = new System.Drawing.Size(1600, 1034);
             this.Controls.Add(this.workSpace);
             this.Controls.Add(this.status);
-            this.Controls.Add(this.toolStrip1);
+            this.Controls.Add(this.toolStrip);
             this.Controls.Add(this.menuStrip1);
             this.MainMenuStrip = this.menuStrip1;
             this.Margin = new System.Windows.Forms.Padding(6);
@@ -383,8 +383,8 @@
             this.SizeChanged += new System.EventHandler(this.MainForm_SizeChanged);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
-            this.toolStrip1.ResumeLayout(false);
-            this.toolStrip1.PerformLayout();
+            this.toolStrip.ResumeLayout(false);
+            this.toolStrip.PerformLayout();
             this.status.ResumeLayout(false);
             this.status.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.workSpace)).EndInit();
@@ -405,7 +405,7 @@
         private ToolStripMenuItem runMenu;
         private ToolStripMenuItem runTraceMenu;
         private ToolStripMenuItem runBundleMenu;
-        private ToolStrip toolStrip1;
+        private ToolStrip toolStrip;
         private ToolStripButton saveTool;
         private ToolStripButton addElementTool;
         private ToolStripButton removeElementTool;

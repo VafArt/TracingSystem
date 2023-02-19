@@ -65,6 +65,14 @@ namespace TracingSystem
             settingsMenu.Enabled = false;
         }
 
+        private void DpiConfiguration()
+        {
+            if(DeviceDpi<150)
+            {
+                toolStrip.ImageScalingSize= new Size(18,18);
+            }
+        }
+
         private void OpenedProjectConfiguration()
         {
             createProjectMenu.Enabled = true;
