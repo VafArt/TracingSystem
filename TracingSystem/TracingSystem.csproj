@@ -9,6 +9,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <COMReference Include="{000204ef-0000-0000-c000-000000000046}">
+      <WrapperTool>tlbimp</WrapperTool>
+      <VersionMinor>0</VersionMinor>
+      <VersionMajor>6</VersionMajor>
+      <Guid>000204ef-0000-0000-c000-000000000046</Guid>
+    </COMReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="DeleteProjectForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
