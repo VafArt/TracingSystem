@@ -242,5 +242,12 @@ namespace TracingSystem
         {
 
         }
+
+        private void toolStrip_LayoutCompleted(object sender, EventArgs e)
+        {
+            var toolStrip = (ToolStrip)sender;
+            toolStrip.ImageScalingSize = DeviceDpi>150 ? new Size(32,32) : new Size(18,18);
+            toolStrip.Invalidate();
+        }
     }
 }

@@ -250,6 +250,7 @@
             this.toolStrip.Size = new System.Drawing.Size(1600, 42);
             this.toolStrip.TabIndex = 1;
             this.toolStrip.Text = "toolStrip1";
+            this.toolStrip.LayoutCompleted += new System.EventHandler(this.toolStrip_LayoutCompleted);
             // 
             // saveTool
             // 
