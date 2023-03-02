@@ -65,14 +65,6 @@ namespace TracingSystem
             settingsMenu.Enabled = false;
         }
 
-        private void DpiConfiguration()
-        {
-            if(DeviceDpi<150)
-            {
-                toolStrip.ImageScalingSize= new Size(18,18);
-            }
-        }
-
         private void OpenedProjectConfiguration()
         {
             createProjectMenu.Enabled = true;
@@ -248,6 +240,22 @@ namespace TracingSystem
             var toolStrip = (ToolStrip)sender;
             toolStrip.ImageScalingSize = DeviceDpi>150 ? new Size(32,32) : new Size(18,18);
             toolStrip.Invalidate();
+        }
+
+        private void workSpace_Paint(object sender, PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            var workspace = (PictureBox)sender;
+            for (decimal relX =0; relX < workSpace.Width; relX += (Convert.ToDecimal(0.393701) * workSpace.DeviceDpi))
+            {
+                for (decimal relY = 0; relY < workSpace.Height; relY += (Convert.ToDecimal(0.393701) * workSpace.DeviceDpi))
+                {
+                    var dotWidth = (int)decimal.Round(0.019685m * workspace.DeviceDpi);
+                    var intRelX = (int)decimal.Round(relX);
+                    var intRelY = (int)decimal.Round(relY);
+                    g.FillRectangle(new SolidBrush(Color.Black), new Rectangle(intRelX, intRelY, dotWidth, dotWidth));
+                }
+            }
         }
     }
 }
