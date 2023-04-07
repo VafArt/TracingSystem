@@ -45,7 +45,8 @@
             this.addTraceMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.removeElementMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.removeTraceMenu = new System.Windows.Forms.ToolStripMenuItem();
-            this.openPCBMenu = new System.Windows.Forms.ToolStripMenuItem();
+            this.addLayerMenu = new System.Windows.Forms.ToolStripMenuItem();
+            this.openPcbLib = new System.Windows.Forms.ToolStripMenuItem();
             this.runMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.runTraceMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.runBundleMenu = new System.Windows.Forms.ToolStripMenuItem();
@@ -170,7 +171,8 @@
             this.addTraceMenu,
             this.removeElementMenu,
             this.removeTraceMenu,
-            this.openPCBMenu});
+            this.addLayerMenu,
+            this.openPcbLib});
             this.editMenu.Name = "editMenu";
             this.editMenu.Size = new System.Drawing.Size(99, 22);
             this.editMenu.Text = "Редактировать";
@@ -199,12 +201,17 @@
             this.removeTraceMenu.Size = new System.Drawing.Size(203, 22);
             this.removeTraceMenu.Text = "Удалить трассу";
             // 
-            // openPCBMenu
+            // addLayerMenu
             // 
-            this.openPCBMenu.Name = "openPCBMenu";
-            this.openPCBMenu.Size = new System.Drawing.Size(203, 22);
-            this.openPCBMenu.Text = "Открыть файл PCBLIB...";
-            this.openPCBMenu.Click += new System.EventHandler(this.openPCBMenu_Click);
+            this.addLayerMenu.Name = "addLayerMenu";
+            this.addLayerMenu.Size = new System.Drawing.Size(203, 22);
+            this.addLayerMenu.Text = "Добавить слой";
+            // 
+            // openPcbLib
+            // 
+            this.openPcbLib.Name = "openPcbLib";
+            this.openPcbLib.Size = new System.Drawing.Size(203, 22);
+            this.openPcbLib.Text = "Открыть файл PCBLIB...";
             // 
             // runMenu
             // 
@@ -251,7 +258,6 @@
             this.toolStrip.Size = new System.Drawing.Size(862, 39);
             this.toolStrip.TabIndex = 1;
             this.toolStrip.Text = "toolStrip1";
-            this.toolStrip.LayoutCompleted += new System.EventHandler(this.toolStrip_LayoutCompleted);
             // 
             // saveTool
             // 
@@ -430,8 +436,9 @@
         private ToolStripMenuItem removeProjectMenu;
         private ToolStripMenuItem closeProgramProjectMenu;
         private ToolStripMenuItem removeTraceMenu;
-        private ToolStripMenuItem openPCBMenu;
+        private ToolStripMenuItem addLayerMenu;
         private ToolStripMenuItem settingsMenu;
         private ToolStripStatusLabel projectNameStatus;
+        private ToolStripMenuItem openPcbLib;
     }
 }

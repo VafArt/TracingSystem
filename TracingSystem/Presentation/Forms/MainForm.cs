@@ -1,43 +1,64 @@
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System.Windows.Forms;
+using TracingSystem.Application.Common.Abstractions;
+using TracingSystem.Application.Projects.Commands.CreateProject;
+using TracingSystem.Application.Projects.Queries.GetAllProjectNames;
+using TracingSystem.Application.Services;
+using TracingSystem.Domain;
+using TracingSystem.Domain.Shared;
+using TracingSystem.Persistance;
 
 namespace TracingSystem
 {
     public partial class MainForm : Form
     {
+        private readonly ITracingSystemDbContext _dbContext;
+
+        private readonly IMediator Mediator;
+
+        private IProjectDataService _project;
+
         public MainForm()
         {
+            _dbContext = Program.ServiceProvider.GetRequiredService<ITracingSystemDbContext>();
+            Mediator = Program.ServiceProvider.GetRequiredService<IMediator>();
+            _project = Program.ServiceProvider.GetRequiredService<IProjectDataService>();
+
             InitializeComponent();
-            ProjectData.NameChanged+=()=> projectNameStatus.Text = $"Название проекта: {ProjectData.Name}";
-            ProjectData.StateChanged += OnStateChanged;
             AlignStatusStrip();
             StartupConfiguration();
+            _project.NameChanged += () => projectNameStatus.Text = $"Название проекта: {_project.Name}";
+            _project.StateChanged += OnStateChanged;
+            toolStrip.ImageScalingSize = DeviceDpi > 150 ? new Size(32, 32) : new Size(18, 18);
         }
 
         public void OnStateChanged()
         {
-            switch (ProjectData.State)
+            switch (_project.State)
             {
-                case State.Startup:
+                case ProjectState.Startup:
                     {
                         StartupConfiguration();
                         break;
                     }
-                case State.OpenedProject:
+                case ProjectState.OpenedProject:
                     {
                         OpenedProjectConfiguration();
                         break;
                     }
-                case State.ConfiguredData:
+                case ProjectState.ConfiguredData:
                     {
                         ConfiguredDataConfiguration();
                         break;
                     }
-                case State.ConfiguredAlgorithm:
+                case ProjectState.ConfiguredAlgorithm:
                     {
                         ConfiguredAlgorithmConfiguration();
                         break;
                     }
-                case State.Traced:
+                case ProjectState.Traced:
                     {
                         TracedConfiguration();
                         break;
@@ -59,7 +80,7 @@ namespace TracingSystem
             addTraceMenu.Enabled = false;
             removeElementMenu.Enabled = false;
             removeTraceMenu.Enabled = false;
-            openPCBMenu.Enabled = false;
+            addLayerMenu.Enabled = false;
             runBundleMenu.Enabled = false;
             runTraceMenu.Enabled = false;
             settingsMenu.Enabled = false;
@@ -79,7 +100,7 @@ namespace TracingSystem
             addTraceMenu.Enabled = true;
             removeElementMenu.Enabled = true;
             removeTraceMenu.Enabled = true;
-            openPCBMenu.Enabled = true;
+            addLayerMenu.Enabled = true;
             runBundleMenu.Enabled = false;
             runTraceMenu.Enabled = false;
             settingsMenu.Enabled = false;
@@ -99,7 +120,7 @@ namespace TracingSystem
             addTraceMenu.Enabled = true;
             removeElementMenu.Enabled = true;
             removeTraceMenu.Enabled = true;
-            openPCBMenu.Enabled = true;
+            addLayerMenu.Enabled = true;
             runBundleMenu.Enabled = false;
             runTraceMenu.Enabled = false;
             settingsMenu.Enabled = true;
@@ -119,7 +140,7 @@ namespace TracingSystem
             addTraceMenu.Enabled = true;
             removeElementMenu.Enabled = true;
             removeTraceMenu.Enabled = true;
-            openPCBMenu.Enabled = true;
+            addLayerMenu.Enabled = true;
             runBundleMenu.Enabled = false;
             runTraceMenu.Enabled = true;
             settingsMenu.Enabled = true;
@@ -139,7 +160,7 @@ namespace TracingSystem
             addTraceMenu.Enabled = true;
             removeElementMenu.Enabled = true;
             removeTraceMenu.Enabled = true;
-            openPCBMenu.Enabled = true;
+            addLayerMenu.Enabled = true;
             runBundleMenu.Enabled = true;
             runTraceMenu.Enabled = true;
             settingsMenu.Enabled = true;
@@ -163,24 +184,35 @@ namespace TracingSystem
             AlignStatusStrip();
         }
 
-        private void createProjectMenu_Click(object sender, EventArgs e)
+        private async void createProjectMenu_Click(object sender, EventArgs e)
         {
-            ProjectData.Name = Microsoft.VisualBasic.Interaction.InputBox("Введите название проекта:","Создание проекта");
-            ProjectData.State = State.OpenedProject;
+            var newProjectName = Microsoft.VisualBasic.Interaction.InputBox("Введите название проекта:", "Создание проекта");
+
+            var createProjectCommand = new CreateProjectCommand(newProjectName);
+            var result = await Mediator.Send(createProjectCommand);
+
+            if (result.IsFailure) { MessageBox.Show(result.Error.Message, "Ошибка!"); return; }
+
+            _project.Project = result.Value;
+            _project.Name = result.Value.Name;
+            _project.State = ProjectState.OpenedProject;
         }
 
-        private void openProjectMenu_Click(object sender, EventArgs e)
+        private async void openProjectMenu_Click(object sender, EventArgs e)
         {
-            var openProjectForm = new OpenProjectForm();
+            var getAllProjectsNames = new GetAllProjectNamesQuery();
+            var result = await Mediator.Send(getAllProjectsNames);
+            var projectNames = result.IsSuccess ? result.Value : new List<string>();
+
+            var openProjectForm = new OpenProjectForm(projectNames);
             openProjectForm.ShowDialog();
-            ProjectData.State = State.Traced;
-            //ProjectData.State = State.OpenedProject;
+            _project.State = ProjectState.OpenedProject;
         }
 
         private void closeProjectMenu_Click(object sender, EventArgs e)
         {
-            ProjectData.Name=String.Empty;
-            ProjectData.State = State.Startup;
+            _project.Name=String.Empty;
+            _project.State = ProjectState.Startup;
         }
 
         private void saveProjectMenu_Click(object sender, EventArgs e)
@@ -208,31 +240,26 @@ namespace TracingSystem
         {
             var deleteProjectForm = new DeleteProjectForm();
             deleteProjectForm.ShowDialog();
-            ProjectData.State = State.Startup;
+            _project.State = ProjectState.Startup;
         }
 
         private void pcbDetailsMenu_Click(object sender, EventArgs e)
         {
             var pcbInfoForm = new PcbInfoForm();
             pcbInfoForm.ShowDialog();
-            ProjectData.State = State.ConfiguredData;
+            _project.State = ProjectState.ConfiguredData;
         }
 
         private void settingsMenu_Click(object sender, EventArgs e)
         {
             var algorithmDetailsForm = new AlgorithmDetailsForm();
             algorithmDetailsForm.ShowDialog();
-            ProjectData.State = State.ConfiguredAlgorithm;
+            _project.State = ProjectState.ConfiguredAlgorithm;
         }
 
         private void runTraceMenu_Click(object sender, EventArgs e)
         {
-            ProjectData.State = State.Traced;
-        }
-
-        private void openPCBMenu_Click(object sender, EventArgs e)
-        {
-
+            _project.State = ProjectState.Traced;
         }
 
         private void toolStrip_LayoutCompleted(object sender, EventArgs e)
@@ -246,7 +273,7 @@ namespace TracingSystem
         {
             var g = e.Graphics;
             var workspace = (PictureBox)sender;
-            for (decimal relX =0; relX < workSpace.Width; relX += (Convert.ToDecimal(0.393701) * workSpace.DeviceDpi))
+            for (decimal relX = 0; relX < workSpace.Width; relX += (Convert.ToDecimal(0.393701) * workSpace.DeviceDpi))
             {
                 for (decimal relY = 0; relY < workSpace.Height; relY += (Convert.ToDecimal(0.393701) * workSpace.DeviceDpi))
                 {
