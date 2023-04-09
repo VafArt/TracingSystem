@@ -43,5 +43,12 @@ namespace TracingSystem.Application.Services
                 StateChanged();
             }
         }
+
+        public void ChangeProject(Project project, ProjectState state)
+        {
+            Project = project;
+            Name = project.Name;
+            State = state;
+        }
     }
 }

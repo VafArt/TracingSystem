@@ -35,8 +35,7 @@ namespace TracingSystem
             // see https://aka.ms/applicationconfiguration.
 
             var dbContext = ServiceProvider.GetRequiredService<TracingSystemDbContext>();
-            dbContext.Database.EnsureDeleted();
-            dbContext.Database.EnsureCreated();
+            DbInitializer.Initialize(dbContext);
 
             System.Windows.Forms.Application.EnableVisualStyles();
             System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
