@@ -8,8 +8,5 @@ using TracingSystem.Domain;
 
 namespace TracingSystem.Application.Projects.Queries.GetProjectByName
 {
-    public class GetProjectByNameQuery : IQuery<Project>
-    {
-        public string Name { get; set; }
-    }
+    public sealed record GetProjectByNameQuery(string Name) : IQuery<Project>;
 }

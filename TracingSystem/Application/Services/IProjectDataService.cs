@@ -20,6 +20,6 @@ namespace TracingSystem.Application.Services
 
         public event Action StateChanged;
 
-
+        public void ChangeProject(Project project, ProjectState state);
     }
 }
