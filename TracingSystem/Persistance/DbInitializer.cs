@@ -32,14 +32,14 @@ namespace TracingSystem.Persistance
                                     new Trace()
                                     {
                                         Length = 15,
-                                        DirectionChangingCoords = new List<DbPoint>()
+                                        DirectionChangingCoords = new List<TracePoint>()
                                         {
-                                            new DbPoint()
+                                            new TracePoint()
                                             {
                                                 X = 0,
                                                 Y = 0,
                                             },
-                                            new DbPoint()
+                                            new TracePoint()
                                             {
                                                 X = 15,
                                                 Y = 0
@@ -52,7 +52,7 @@ namespace TracingSystem.Persistance
                                     new Element()
                                     {
                                         Name = "Test Element",
-                                        Location = new DbPoint()
+                                        Location = new ElementPoint()
                                         {
                                             X = 35,
                                             Y= 25

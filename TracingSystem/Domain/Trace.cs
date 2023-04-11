@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TracingSystem.Domain;
+using TracingSystem.Application.Common.Abstractions;
 
 namespace TracingSystem.Domain
 {
@@ -15,7 +15,7 @@ namespace TracingSystem.Domain
 
         public int Length { get; set; }
 
-        public ICollection<DbPoint>? DirectionChangingCoords { get; set; }
+        public ICollection<TracePoint>? DirectionChangingCoords { get; set; }
 
         public Layer Layer { get; set; }
     }

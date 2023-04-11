@@ -19,7 +19,7 @@ namespace TracingSystem.Domain.Errors
                 "Project.ProjectTableIsEmpty",
                 "Нет ни одного проекта!");
 
-            public static readonly Error NoSuchProject = new Error(
+            public static readonly Error ProjectNotFound = new Error(
                 "Project.NoSuchProject",
                 "Проект не найден!");
         }

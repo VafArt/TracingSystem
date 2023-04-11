@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TracingSystem.Domain
+namespace TracingSystem.Application.Common.Abstractions
 {
-    public class DbPoint
+    public abstract class DbPoint
     {
         public int Id { get; set; }
 

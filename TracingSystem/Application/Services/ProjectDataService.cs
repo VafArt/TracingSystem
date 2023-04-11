@@ -10,7 +10,7 @@ namespace TracingSystem.Application.Services
 {
     public class ProjectDataService : IProjectDataService
     {
-        public Project Project { get; set; }
+        public Project? Project { get; set; }
 
         public event Action NameChanged;
 

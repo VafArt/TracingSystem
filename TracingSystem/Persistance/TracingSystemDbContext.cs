@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,6 +22,10 @@ namespace TracingSystem.Persistance
 
         public DbSet<Element> Elements { get; set; }
 
+        public DbSet<ElementPoint> ElementPoints { get; set; }
+
+        public DbSet<TracePoint> TracePoints { get; set; }
+
         public TracingSystemDbContext(DbContextOptions<TracingSystemDbContext> options)
             : base(options)
         {
@@ -30,6 +35,11 @@ namespace TracingSystem.Persistance
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Element>()
+                .HasOne(element => element.Location)
+                .WithOne(elementPoint => elementPoint.Element)
+                .HasForeignKey(typeof(ElementPoint), "ElementId");
         }
     }
 }

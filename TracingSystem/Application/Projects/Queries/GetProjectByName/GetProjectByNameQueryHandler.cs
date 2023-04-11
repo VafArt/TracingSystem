@@ -25,7 +25,7 @@ namespace TracingSystem.Application.Projects.Queries.GetProjectByName
         {
             var project = await _dbContext.Projects
                 .FirstOrDefaultAsync(project => project.Name == request.Name);
-            if (project == null) return Result.Failure(project, DomainErrors.Project.NoSuchProject);
+            if (project == null) return Result.Failure(project, DomainErrors.Project.ProjectNotFound);
 
             return project;
         }

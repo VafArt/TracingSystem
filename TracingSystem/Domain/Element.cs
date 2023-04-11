@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TracingSystem.Application.Common.Abstractions;
 
 namespace TracingSystem.Domain
 {
@@ -15,9 +16,9 @@ namespace TracingSystem.Domain
 
         public string Name { get; set; }
 
-        public DbPoint Location { get; set; }
+        public ElementPoint Location { get; set; }
 
-        public ICollection<DbPoint>? PadsCoords { get; set; }
+        public ICollection<ElementPoint>? PadsCoords { get; set; }
 
         public byte[]? Image { get; set; }
 

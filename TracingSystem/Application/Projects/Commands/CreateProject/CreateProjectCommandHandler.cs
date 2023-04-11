@@ -30,6 +30,7 @@ namespace TracingSystem.Application.Projects.Commands.CreateProject
             project = new Project()
             {
                 Name = request.Name,
+                State = ProjectState.OpenedProject
             };
             await _dbContext.Projects.AddAsync(project);
             await _dbContext.SaveChangesAsync(cancellationToken);

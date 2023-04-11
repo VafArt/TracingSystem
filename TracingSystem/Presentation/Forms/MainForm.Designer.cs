@@ -65,6 +65,7 @@
             this.progressBarStatus = new System.Windows.Forms.ToolStripProgressBar();
             this.projectNameStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.workSpace = new System.Windows.Forms.PictureBox();
+            this.changeProjectNameMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.toolStrip.SuspendLayout();
             this.status.SuspendLayout();
@@ -172,7 +173,8 @@
             this.removeElementMenu,
             this.removeTraceMenu,
             this.addLayerMenu,
-            this.openPcbLib});
+            this.openPcbLib,
+            this.changeProjectNameMenu});
             this.editMenu.Name = "editMenu";
             this.editMenu.Size = new System.Drawing.Size(99, 22);
             this.editMenu.Text = "Редактировать";
@@ -180,37 +182,37 @@
             // addElementMenu
             // 
             this.addElementMenu.Name = "addElementMenu";
-            this.addElementMenu.Size = new System.Drawing.Size(203, 22);
+            this.addElementMenu.Size = new System.Drawing.Size(228, 22);
             this.addElementMenu.Text = "Добавить элемент";
             // 
             // addTraceMenu
             // 
             this.addTraceMenu.Name = "addTraceMenu";
-            this.addTraceMenu.Size = new System.Drawing.Size(203, 22);
+            this.addTraceMenu.Size = new System.Drawing.Size(228, 22);
             this.addTraceMenu.Text = "Добавить трассу";
             // 
             // removeElementMenu
             // 
             this.removeElementMenu.Name = "removeElementMenu";
-            this.removeElementMenu.Size = new System.Drawing.Size(203, 22);
+            this.removeElementMenu.Size = new System.Drawing.Size(228, 22);
             this.removeElementMenu.Text = "Удалить элемент";
             // 
             // removeTraceMenu
             // 
             this.removeTraceMenu.Name = "removeTraceMenu";
-            this.removeTraceMenu.Size = new System.Drawing.Size(203, 22);
+            this.removeTraceMenu.Size = new System.Drawing.Size(228, 22);
             this.removeTraceMenu.Text = "Удалить трассу";
             // 
             // addLayerMenu
             // 
             this.addLayerMenu.Name = "addLayerMenu";
-            this.addLayerMenu.Size = new System.Drawing.Size(203, 22);
+            this.addLayerMenu.Size = new System.Drawing.Size(228, 22);
             this.addLayerMenu.Text = "Добавить слой";
             // 
             // openPcbLib
             // 
             this.openPcbLib.Name = "openPcbLib";
-            this.openPcbLib.Size = new System.Drawing.Size(203, 22);
+            this.openPcbLib.Size = new System.Drawing.Size(228, 22);
             this.openPcbLib.Text = "Открыть файл PCBLIB...";
             // 
             // runMenu
@@ -376,6 +378,13 @@
             this.workSpace.Paint += new System.Windows.Forms.PaintEventHandler(this.workSpace_Paint);
             this.workSpace.MouseMove += new System.Windows.Forms.MouseEventHandler(this.workSpace_MouseMove);
             // 
+            // changeProjectNameMenu
+            // 
+            this.changeProjectNameMenu.Name = "changeProjectNameMenu";
+            this.changeProjectNameMenu.Size = new System.Drawing.Size(228, 22);
+            this.changeProjectNameMenu.Text = "Изменить название проекта";
+            this.changeProjectNameMenu.Click += new System.EventHandler(this.changeProjectNameMenu_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -440,5 +449,6 @@
         private ToolStripMenuItem settingsMenu;
         private ToolStripStatusLabel projectNameStatus;
         private ToolStripMenuItem openPcbLib;
+        private ToolStripMenuItem changeProjectNameMenu;
     }
 }

@@ -10,7 +10,7 @@ namespace TracingSystem.Application.Services
 {
     public interface IProjectDataService
     {
-        public Project Project { get; set; }
+        public Project? Project { get; set; }
 
         public string Name { get; set; }
 

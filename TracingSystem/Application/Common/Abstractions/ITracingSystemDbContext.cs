@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +18,10 @@ namespace TracingSystem.Application.Common.Abstractions
         public DbSet<Pcb> Pcbs { get; set; }
 
         public DbSet<Trace> Traces { get; set; }
+
+        public DbSet<Element> Elements { get; set; }
+
+        public ChangeTracker ChangeTracker { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     }

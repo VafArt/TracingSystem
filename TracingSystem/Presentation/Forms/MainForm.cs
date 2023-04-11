@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Windows.Forms;
 using TracingSystem.Application.Common.Abstractions;
 using TracingSystem.Application.Projects.Commands.CreateProject;
+using TracingSystem.Application.Projects.Commands.SaveProject;
+using TracingSystem.Application.Projects.Commands.UpdateProject;
 using TracingSystem.Application.Projects.Queries.GetAllProjectNames;
 using TracingSystem.Application.Services;
 using TracingSystem.Domain;
@@ -84,6 +86,7 @@ namespace TracingSystem
             runBundleMenu.Enabled = false;
             runTraceMenu.Enabled = false;
             settingsMenu.Enabled = false;
+            changeProjectNameMenu.Enabled = false;
         }
 
         private void OpenedProjectConfiguration()
@@ -104,6 +107,7 @@ namespace TracingSystem
             runBundleMenu.Enabled = false;
             runTraceMenu.Enabled = false;
             settingsMenu.Enabled = false;
+            changeProjectNameMenu.Enabled = true;
         }
 
         private void ConfiguredDataConfiguration()
@@ -124,6 +128,7 @@ namespace TracingSystem
             runBundleMenu.Enabled = false;
             runTraceMenu.Enabled = false;
             settingsMenu.Enabled = true;
+            changeProjectNameMenu.Enabled = true;
         }
 
         private void ConfiguredAlgorithmConfiguration()
@@ -144,6 +149,7 @@ namespace TracingSystem
             runBundleMenu.Enabled = false;
             runTraceMenu.Enabled = true;
             settingsMenu.Enabled = true;
+            changeProjectNameMenu.Enabled = true;
         }
 
         private void TracedConfiguration()
@@ -164,6 +170,7 @@ namespace TracingSystem
             runBundleMenu.Enabled = true;
             runTraceMenu.Enabled = true;
             settingsMenu.Enabled = true;
+            changeProjectNameMenu.Enabled = true;
         }
 
         private void workSpace_MouseMove(object sender, MouseEventArgs e)
@@ -186,7 +193,24 @@ namespace TracingSystem
 
         private async void createProjectMenu_Click(object sender, EventArgs e)
         {
+            if(_project.State != ProjectState.Startup) 
+            {
+                var messageBoxResult = MessageBox.Show("Сохранить текущий проект?", "Созданение", MessageBoxButtons.YesNoCancel);
+                if (messageBoxResult == DialogResult.Cancel) return;
+                if (messageBoxResult == DialogResult.Yes)
+                {
+                    var saveProjectCommand = new SaveProjectCommand(_project.Project);
+                    var saveResult = await Mediator.Send(saveProjectCommand);
+                    if (saveResult.IsFailure) { MessageBox.Show(saveResult.Error.Message, "Ошибка!"); return; }
+                }
+                _project.Project = null;
+                _project.Name = string.Empty;
+                _project.State = ProjectState.Startup;
+            }
+
             var newProjectName = Microsoft.VisualBasic.Interaction.InputBox("Введите название проекта:", "Создание проекта");
+
+            if (newProjectName == string.Empty) return;
 
             var createProjectCommand = new CreateProjectCommand(newProjectName);
             var result = await Mediator.Send(createProjectCommand);
@@ -200,23 +224,49 @@ namespace TracingSystem
 
         private async void openProjectMenu_Click(object sender, EventArgs e)
         {
+            if (_project.State != ProjectState.Startup)
+            {
+                var messageBoxResult = MessageBox.Show("Сохранить текущий проект?", "Созранение", MessageBoxButtons.YesNoCancel);
+                if (messageBoxResult == DialogResult.Cancel) return;
+                if (messageBoxResult == DialogResult.Yes)
+                {
+                    var saveProjectCommand = new SaveProjectCommand(_project.Project);
+                    var saveResult = await Mediator.Send(saveProjectCommand);
+                    if (saveResult.IsFailure) { MessageBox.Show(saveResult.Error.Message, "Ошибка!"); return; }
+                }
+                _project.Project = null;
+                _project.Name = string.Empty;
+                _project.State = ProjectState.Startup;
+            }
+
             var getAllProjectsNames = new GetAllProjectNamesQuery();
             var result = await Mediator.Send(getAllProjectsNames);
             var projectNames = result.IsSuccess ? result.Value : new List<string>();
 
             var openProjectForm = new OpenProjectForm(projectNames);
             openProjectForm.ShowDialog();
-            _project.State = ProjectState.OpenedProject;
         }
 
-        private void closeProjectMenu_Click(object sender, EventArgs e)
+        private async void closeProjectMenu_Click(object sender, EventArgs e)
         {
-            _project.Name=String.Empty;
+            var messageBoxResult = MessageBox.Show("Сохранить текущий проект?", "Созранение", MessageBoxButtons.YesNoCancel);
+            if (messageBoxResult == DialogResult.Cancel) return;
+            if (messageBoxResult == DialogResult.Yes)
+            {
+                var saveProjectCommand = new SaveProjectCommand(_project.Project);
+                var saveResult = await Mediator.Send(saveProjectCommand);
+                if (saveResult.IsFailure) { MessageBox.Show(saveResult.Error.Message, "Ошибка!"); return; }
+            }
+            _project.Project = null;
+            _project.Name = string.Empty;
             _project.State = ProjectState.Startup;
         }
 
-        private void saveProjectMenu_Click(object sender, EventArgs e)
+        private async void saveProjectMenu_Click(object sender, EventArgs e)
         {
+            var saveProjectCommand = new SaveProjectCommand(_project.Project);
+            var saveResult = await Mediator.Send(saveProjectCommand);
+            if (saveResult.IsFailure) { MessageBox.Show(saveResult.Error.Message, "Ошибка!"); return; }
             MessageBox.Show("Проект сохранен!", "Сохранение");
         }
 
@@ -236,11 +286,13 @@ namespace TracingSystem
             Close();
         }
 
-        private void removeProjectMenu_Click(object sender, EventArgs e)
+        private async void removeProjectMenu_Click(object sender, EventArgs e)
         {
-            var deleteProjectForm = new DeleteProjectForm();
+            var getAllProjectNamesQuery = new GetAllProjectNamesQuery();
+            var getProjectNamesResult = await Mediator.Send(getAllProjectNamesQuery);
+            var projectNames = getProjectNamesResult.IsFailure ? new List<string>() : getProjectNamesResult.Value;
+            var deleteProjectForm = new DeleteProjectForm(projectNames);
             deleteProjectForm.ShowDialog();
-            _project.State = ProjectState.Startup;
         }
 
         private void pcbDetailsMenu_Click(object sender, EventArgs e)
@@ -283,6 +335,15 @@ namespace TracingSystem
                     g.FillRectangle(new SolidBrush(Color.Black), new Rectangle(intRelX, intRelY, dotWidth, dotWidth));
                 }
             }
+        }
+
+        private async void changeProjectNameMenu_Click(object sender, EventArgs e)
+        {
+            var newProjectName = Microsoft.VisualBasic.Interaction.InputBox("Введите название проекта:", "Изменение названия проекта");
+            var changeProjectNameCommand = new ChangeProjectNameCommand(newProjectName);
+            var changeNameResult = await Mediator.Send(changeProjectNameCommand);
+            if (changeNameResult.IsFailure) { MessageBox.Show(changeNameResult.Error.Message, "Ошибка!"); return; };
+
         }
     }
 }

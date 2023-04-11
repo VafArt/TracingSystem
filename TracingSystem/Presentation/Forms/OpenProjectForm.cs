@@ -42,7 +42,7 @@ namespace TracingSystem
                     FlatStyle = FlatStyle.Flat
                 };
                 button.FlatAppearance.BorderSize = 0;
-                button.Font = DeviceDpi > 96 ? new Font("Segoe UI", 24) : new Font("Segoe UI", 16);
+                button.Font = new Font("Segoe UI", 16);
 
                 button.Click += OpenProject_Click;
 
