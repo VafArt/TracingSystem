@@ -19,5 +19,8 @@ namespace TracingSystem.Domain
         public byte[]? PcbLib { get; set; }
 
         public ICollection<Pcb>? Pcbs { get; set; }
+
+        public string? PossibleElementNamesJson { get; set; }
+
     }
 }
