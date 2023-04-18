@@ -47,6 +47,7 @@
             this.removeTraceMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.addLayerMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.openPcbLib = new System.Windows.Forms.ToolStripMenuItem();
+            this.changeProjectNameMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.runMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.runTraceMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.runBundleMenu = new System.Windows.Forms.ToolStripMenuItem();
@@ -65,7 +66,6 @@
             this.progressBarStatus = new System.Windows.Forms.ToolStripProgressBar();
             this.projectNameStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.workSpace = new System.Windows.Forms.PictureBox();
-            this.changeProjectNameMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.toolStrip.SuspendLayout();
             this.status.SuspendLayout();
@@ -184,6 +184,7 @@
             this.addElementMenu.Name = "addElementMenu";
             this.addElementMenu.Size = new System.Drawing.Size(228, 22);
             this.addElementMenu.Text = "Добавить элемент";
+            this.addElementMenu.Click += new System.EventHandler(this.addElementMenu_Click);
             // 
             // addTraceMenu
             // 
@@ -214,6 +215,14 @@
             this.openPcbLib.Name = "openPcbLib";
             this.openPcbLib.Size = new System.Drawing.Size(228, 22);
             this.openPcbLib.Text = "Открыть файл PCBLIB...";
+            this.openPcbLib.Click += new System.EventHandler(this.openPcbLib_Click);
+            // 
+            // changeProjectNameMenu
+            // 
+            this.changeProjectNameMenu.Name = "changeProjectNameMenu";
+            this.changeProjectNameMenu.Size = new System.Drawing.Size(228, 22);
+            this.changeProjectNameMenu.Text = "Изменить название проекта";
+            this.changeProjectNameMenu.Click += new System.EventHandler(this.changeProjectNameMenu_Click);
             // 
             // runMenu
             // 
@@ -377,13 +386,6 @@
             this.workSpace.TabStop = false;
             this.workSpace.Paint += new System.Windows.Forms.PaintEventHandler(this.workSpace_Paint);
             this.workSpace.MouseMove += new System.Windows.Forms.MouseEventHandler(this.workSpace_MouseMove);
-            // 
-            // changeProjectNameMenu
-            // 
-            this.changeProjectNameMenu.Name = "changeProjectNameMenu";
-            this.changeProjectNameMenu.Size = new System.Drawing.Size(228, 22);
-            this.changeProjectNameMenu.Text = "Изменить название проекта";
-            this.changeProjectNameMenu.Click += new System.EventHandler(this.changeProjectNameMenu_Click);
             // 
             // MainForm
             // 

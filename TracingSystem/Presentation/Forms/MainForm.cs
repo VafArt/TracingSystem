@@ -1,6 +1,11 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using OriginalCircuit.AltiumSharp;
+using OriginalCircuit.AltiumSharp.Drawing;
+using OriginalCircuit.AltiumSharp.Records;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Windows.Forms;
 using TracingSystem.Application.Common.Abstractions;
 using TracingSystem.Application.Projects.Commands.CreateProject;
@@ -11,6 +16,7 @@ using TracingSystem.Application.Services;
 using TracingSystem.Domain;
 using TracingSystem.Domain.Shared;
 using TracingSystem.Persistance;
+using TracingSystem.Presentation.Forms;
 
 namespace TracingSystem
 {
@@ -22,11 +28,17 @@ namespace TracingSystem
 
         private IProjectDataService _project;
 
+        private PcbLibRenderer _pcbLibRenderer;
+
+        private PcbLibReader _pcbLibReader;
+
         public MainForm()
         {
             _dbContext = Program.ServiceProvider.GetRequiredService<ITracingSystemDbContext>();
             Mediator = Program.ServiceProvider.GetRequiredService<IMediator>();
             _project = Program.ServiceProvider.GetRequiredService<IProjectDataService>();
+            _pcbLibRenderer = new PcbLibRenderer();
+            _pcbLibReader = new PcbLibReader();
 
             InitializeComponent();
             AlignStatusStrip();
@@ -87,6 +99,7 @@ namespace TracingSystem
             runTraceMenu.Enabled = false;
             settingsMenu.Enabled = false;
             changeProjectNameMenu.Enabled = false;
+            openPcbLib.Enabled = false;
         }
 
         private void OpenedProjectConfiguration()
@@ -108,6 +121,7 @@ namespace TracingSystem
             runTraceMenu.Enabled = false;
             settingsMenu.Enabled = false;
             changeProjectNameMenu.Enabled = true;
+            openPcbLib.Enabled = true;
         }
 
         private void ConfiguredDataConfiguration()
@@ -129,6 +143,7 @@ namespace TracingSystem
             runTraceMenu.Enabled = false;
             settingsMenu.Enabled = true;
             changeProjectNameMenu.Enabled = true;
+            openPcbLib.Enabled = true;
         }
 
         private void ConfiguredAlgorithmConfiguration()
@@ -150,6 +165,7 @@ namespace TracingSystem
             runTraceMenu.Enabled = true;
             settingsMenu.Enabled = true;
             changeProjectNameMenu.Enabled = true;
+            openPcbLib.Enabled = true;
         }
 
         private void TracedConfiguration()
@@ -171,6 +187,7 @@ namespace TracingSystem
             runTraceMenu.Enabled = true;
             settingsMenu.Enabled = true;
             changeProjectNameMenu.Enabled = true;
+            openPcbLib.Enabled = true;
         }
 
         private void workSpace_MouseMove(object sender, MouseEventArgs e)
@@ -203,6 +220,10 @@ namespace TracingSystem
                     var saveResult = await Mediator.Send(saveProjectCommand);
                     if (saveResult.IsFailure) { MessageBox.Show(saveResult.Error.Message, "Ошибка!"); return; }
                 }
+                if (messageBoxResult == DialogResult.No)
+                {
+                    _dbContext.ChangeTracker.Clear();
+                }
                 _project.Project = null;
                 _project.Name = string.Empty;
                 _project.State = ProjectState.Startup;
@@ -234,6 +255,10 @@ namespace TracingSystem
                     var saveResult = await Mediator.Send(saveProjectCommand);
                     if (saveResult.IsFailure) { MessageBox.Show(saveResult.Error.Message, "Ошибка!"); return; }
                 }
+                if (messageBoxResult == DialogResult.No)
+                {
+                    _dbContext.ChangeTracker.Clear();
+                }
                 _project.Project = null;
                 _project.Name = string.Empty;
                 _project.State = ProjectState.Startup;
@@ -256,6 +281,10 @@ namespace TracingSystem
                 var saveProjectCommand = new SaveProjectCommand(_project.Project);
                 var saveResult = await Mediator.Send(saveProjectCommand);
                 if (saveResult.IsFailure) { MessageBox.Show(saveResult.Error.Message, "Ошибка!"); return; }
+            }
+            if(messageBoxResult == DialogResult.No) 
+            {
+                _dbContext.ChangeTracker.Clear();
             }
             _project.Project = null;
             _project.Name = string.Empty;
@@ -344,6 +373,123 @@ namespace TracingSystem
             var changeNameResult = await Mediator.Send(changeProjectNameCommand);
             if (changeNameResult.IsFailure) { MessageBox.Show(changeNameResult.Error.Message, "Ошибка!"); return; };
 
+        }
+
+        private async void openPcbLib_Click(object sender, EventArgs e)
+        {
+            if (_project.Project.PcbLib != null)
+            {
+                var dialogResult = MessageBox.Show("Если изменить файл .PcbLib, то все элементы и трассы пропадут, продолжить?", "Внимание!", MessageBoxButtons.YesNoCancel);
+                if (dialogResult == DialogResult.Cancel) return;
+                if (dialogResult == DialogResult.No) return;
+                _project.Project.Pcbs = null;
+                _project.Project.PcbLib = null;
+            }
+
+            var openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "PCBLIB(*.pcblib)|*.pcblib";
+            openFileDialog.RestoreDirectory = true;
+            if(openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                using (var stream = new FileStream(openFileDialog.FileName, FileMode.Open))
+                {
+                    var mem = new MemoryStream();
+                    stream.CopyTo(mem);
+                    _project.Project.PcbLib = mem.ToArray();
+                    using (var pcbLibReader = new PcbLibReader())
+                    {
+                        var pcbLib = pcbLibReader.Read(mem);
+                        var componentNames = new List<string>();
+                        foreach (var component in pcbLib.Items)
+                        {
+                            componentNames.Add(component.Pattern);
+                        }
+                        var project = _dbContext.Projects.FirstOrDefault(project=>project.Name == _project.Name);
+                        project.PossibleElementNamesJson = JsonSerializer.Serialize(componentNames);
+                        _project.Project.PossibleElementNamesJson = project.PossibleElementNamesJson;
+                        await _dbContext.SaveChangesAsync(CancellationToken.None);
+                        _dbContext.ChangeTracker.Clear();
+                    }
+                    await mem.DisposeAsync();
+                }
+
+                MessageBox.Show("Файл добавлен!", "Успех!");
+            }
+        }
+
+        private async void addElementMenu_Click(object sender, EventArgs e)
+        {
+            var elementNames = _project.Project.PossibleElementNamesJson == null ?
+                new List<string>() :
+                JsonSerializer.Deserialize<List<string>>(_project.Project.PossibleElementNamesJson);
+            var addElementForm = new AddElementForm(elementNames);
+            addElementForm.ShowDialog();
+
+            var component = new PcbComponent();
+            using (var mem = new MemoryStream(_project.Project.PcbLib))
+            {
+                var pcbLib = _pcbLibReader.Read(mem);
+                component = pcbLib.Items.FirstOrDefault(component => component.Pattern == addElementForm.SelectedComponentName);
+            }
+            for (int i = 0; i < addElementForm.SelectedComponentCount; i++)
+            {
+                await RenderPcbComponent(component);
+            }
+        }
+
+        private int _componentX;
+        private int _componentY;
+        private async Task RenderPcbComponent(PcbComponent component)
+        {
+            _pcbLibRenderer.Component = component;
+            _pcbLibRenderer.Zoom = 3;
+            var rect = _pcbLibRenderer.CalculateComponentBounds();
+
+            _pcbLibRenderer.BackgroundColor = Color.Transparent;
+            var width = (int)Math.Round(_pcbLibRenderer.ScaleCoord(rect.Width));
+            var height = (int)Math.Round(_pcbLibRenderer.ScaleCoord(rect.Height));
+
+            var image = new Bitmap(width, height);
+            var pictureBox = new PictureBox();
+            pictureBox.Size = new Size(width, height);
+
+            using (var g = Graphics.FromImage(image))
+            {
+                _pcbLibRenderer.Render(g, pictureBox.Width, pictureBox.Height, true, false);
+                var pads = component.Primitives.Where(primitive => primitive is PcbPad).Select(pad => pad as PcbPad);
+                var padsPoints = pads.Select(pad => Tuple.Create(_pcbLibRenderer.ScreenFromWorld(pad.Location.X, pad.Location.Y), pad.Size)).ToList();
+
+                foreach (var pad in padsPoints)
+                {
+                    g.FillEllipse(new SolidBrush(Color.Red),
+                        pad.Item1.X - (_pcbLibRenderer.ScaleCoord(pad.Item2.X) / 2),
+                        pad.Item1.Y - (_pcbLibRenderer.ScaleCoord(pad.Item2.Y) / 2),
+                        _pcbLibRenderer.ScaleCoord(pad.Item2.X),
+                        _pcbLibRenderer.ScaleCoord(pad.Item2.Y));
+
+                }
+
+                pictureBox.Image = image;
+                workSpace.Controls.Add(pictureBox);
+                pictureBox.Invalidate();
+            }
+
+            pictureBox.MouseDown += (sender, args) =>
+            {
+                _componentX = args.X;
+                _componentY = args.Y;
+            };
+
+            pictureBox.MouseMove += (sender, args) =>
+            {
+                if ((MouseButtons & MouseButtons.Left) != 0)
+                {
+                    var deltaX = args.X - _componentX;
+                    var deltaY = args.Y - _componentY;
+                    var pictureBox = sender as PictureBox;
+                    pictureBox.Location = new Point(pictureBox.Location.X + deltaX, pictureBox.Location.Y + deltaY);
+                }
+            };
         }
     }
 }
