@@ -14,6 +14,7 @@ using TracingSystem.Application.Projects.Commands.UpdateProject;
 using TracingSystem.Application.Projects.Queries.GetAllProjectNames;
 using TracingSystem.Application.Services;
 using TracingSystem.Domain;
+using TracingSystem.Domain.Errors;
 using TracingSystem.Domain.Shared;
 using TracingSystem.Persistance;
 using TracingSystem.Presentation.Forms;
@@ -45,6 +46,7 @@ namespace TracingSystem
             StartupConfiguration();
             _project.NameChanged += () => projectNameStatus.Text = $"Название проекта: {_project.Name}";
             _project.StateChanged += OnStateChanged;
+            _project.ProjectChanged += OnProjectChanged;
             toolStrip.ImageScalingSize = DeviceDpi > 150 ? new Size(32, 32) : new Size(18, 18);
         }
 
@@ -78,6 +80,15 @@ namespace TracingSystem
                         break;
                     }
             }
+        }
+
+        public void OnProjectChanged()
+        {
+            toolStripChoosePcb.Items.Clear();
+            toolStripChoosePcb.Text = "Выбрать плату";
+            if (_project.Project is null) return;
+            foreach(var pcb in _project.Project.Pcbs)
+                toolStripChoosePcb.Items.Add(pcb.Name);
         }
 
         private void StartupConfiguration()
@@ -224,9 +235,7 @@ namespace TracingSystem
                 {
                     _dbContext.ChangeTracker.Clear();
                 }
-                _project.Project = null;
-                _project.Name = string.Empty;
-                _project.State = ProjectState.Startup;
+                _project.ChangeProject(null, ProjectState.Startup);
             }
 
             var newProjectName = Microsoft.VisualBasic.Interaction.InputBox("Введите название проекта:", "Создание проекта");
@@ -238,9 +247,7 @@ namespace TracingSystem
 
             if (result.IsFailure) { MessageBox.Show(result.Error.Message, "Ошибка!"); return; }
 
-            _project.Project = result.Value;
-            _project.Name = result.Value.Name;
-            _project.State = ProjectState.OpenedProject;
+            _project.ChangeProject(result.Value, ProjectState.OpenedProject);
         }
 
         private async void openProjectMenu_Click(object sender, EventArgs e)
@@ -259,9 +266,7 @@ namespace TracingSystem
                 {
                     _dbContext.ChangeTracker.Clear();
                 }
-                _project.Project = null;
-                _project.Name = string.Empty;
-                _project.State = ProjectState.Startup;
+                _project.ChangeProject(null, ProjectState.Startup);
             }
 
             var getAllProjectsNames = new GetAllProjectNamesQuery();
@@ -285,10 +290,8 @@ namespace TracingSystem
             if(messageBoxResult == DialogResult.No) 
             {
                 _dbContext.ChangeTracker.Clear();
-            }
-            _project.Project = null;
-            _project.Name = string.Empty;
-            _project.State = ProjectState.Startup;
+            };
+            _project.ChangeProject(null, ProjectState.Startup);
         }
 
         private async void saveProjectMenu_Click(object sender, EventArgs e)
@@ -328,19 +331,19 @@ namespace TracingSystem
         {
             var pcbInfoForm = new PcbInfoForm();
             pcbInfoForm.ShowDialog();
-            _project.State = ProjectState.ConfiguredData;
+            _project.ChangeProject(_project.Project, ProjectState.ConfiguredData);
         }
 
         private void settingsMenu_Click(object sender, EventArgs e)
         {
             var algorithmDetailsForm = new AlgorithmDetailsForm();
             algorithmDetailsForm.ShowDialog();
-            _project.State = ProjectState.ConfiguredAlgorithm;
+            _project.ChangeProject(_project.Project, ProjectState.ConfiguredAlgorithm);
         }
 
         private void runTraceMenu_Click(object sender, EventArgs e)
         {
-            _project.State = ProjectState.Traced;
+            _project.ChangeProject(_project.Project, ProjectState.Traced);
         }
 
         private void toolStrip_LayoutCompleted(object sender, EventArgs e)
@@ -490,6 +493,38 @@ namespace TracingSystem
                     pictureBox.Location = new Point(pictureBox.Location.X + deltaX, pictureBox.Location.Y + deltaY);
                 }
             };
+        }
+
+        private void addPcbToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var newPcbName = Microsoft.VisualBasic.Interaction.InputBox("Введите название платы:", "Добавление новой платы");
+            if (newPcbName == null) { MessageBox.Show("Некорректный ввод!", "Ошибка!"); return; }
+            _project.Project.Pcbs.Add(new Pcb() { Name = newPcbName});
+            _project.PerformProjectChangeAction();
+        }
+
+        private void deletePcbToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var pcbToDeleteName = toolStripChoosePcb.SelectedItem as string;
+            if (pcbToDeleteName == null) { MessageBox.Show("Выберите плату для удаления", "Ошибка!"); return; }
+            var pcbToDelete = _project.Project.Pcbs.FirstOrDefault(pcb => pcb.Name == pcbToDeleteName);
+            if(pcbToDelete == null) { MessageBox.Show(DomainErrors.Pcb.PcbNotFound.Message, "Ошибка!"); return; }
+            _project.Project.Pcbs.Remove(pcbToDelete);
+            _project.PerformProjectChangeAction();
+        }
+
+        private void changePcbNameToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var pcbToUpdateName = toolStripChoosePcb.SelectedItem as string;
+            if (pcbToUpdateName == null) { MessageBox.Show("Выберите плату для изменения", "Ошибка!"); return; }
+            var pcbToUpdate = _project.Project.Pcbs.FirstOrDefault(pcb => pcb.Name == pcbToUpdateName);
+            if (pcbToUpdate == null) { MessageBox.Show(DomainErrors.Pcb.PcbNotFound.Message, "Ошибка!"); return; }
+
+            var newName = Microsoft.VisualBasic.Interaction.InputBox("Введите новое название платы:", "Изменение платы");
+            if(newName is null) { MessageBox.Show("Некорректный ввод!", "Ошибка!"); return; }
+
+            pcbToUpdate.Name = newName;
+            _project.PerformProjectChangeAction();
         }
     }
 }

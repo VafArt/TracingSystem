@@ -10,11 +10,13 @@ namespace TracingSystem.Application.Services
 {
     public class ProjectDataService : IProjectDataService
     {
-        public Project? Project { get; set; }
+        public Project? Project { get; private set; }
 
         public event Action NameChanged;
 
         public event Action StateChanged;
+
+        public event Action ProjectChanged;
 
         private string name;
         public string Name
@@ -23,7 +25,7 @@ namespace TracingSystem.Application.Services
             {
                 return name;
             }
-            set
+            private set
             {
                 name = value;
                 NameChanged();
@@ -37,7 +39,7 @@ namespace TracingSystem.Application.Services
             {
                 return state;
             }
-            set
+            private set
             {
                 state = value;
                 StateChanged();
@@ -47,8 +49,14 @@ namespace TracingSystem.Application.Services
         public void ChangeProject(Project project, ProjectState state)
         {
             Project = project;
-            Name = project.Name;
+            Name = project?.Name;
             State = state;
+            ProjectChanged();
+        }
+
+        public void PerformProjectChangeAction()
+        {
+            ProjectChanged();
         }
     }
 }

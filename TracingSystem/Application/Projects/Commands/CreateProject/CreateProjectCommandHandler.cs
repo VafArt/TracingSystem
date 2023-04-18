@@ -30,7 +30,14 @@ namespace TracingSystem.Application.Projects.Commands.CreateProject
             project = new Project()
             {
                 Name = request.Name,
-                State = ProjectState.OpenedProject
+                State = ProjectState.OpenedProject,
+                Pcbs = new List<Pcb>()
+                {
+                    new Pcb()
+                    {
+                        Name = request.Name + " плата",
+                    }
+                }
             };
             await _dbContext.Projects.AddAsync(project);
             await _dbContext.SaveChangesAsync(cancellationToken);

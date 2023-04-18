@@ -10,16 +10,19 @@ namespace TracingSystem.Application.Services
 {
     public interface IProjectDataService
     {
-        public Project? Project { get; set; }
+        public Project? Project { get; }
 
-        public string Name { get; set; }
+        public string Name { get; }
 
-        public ProjectState State { get; set; }
+        public ProjectState State { get; }
 
         public event Action NameChanged;
 
         public event Action StateChanged;
 
+        public event Action ProjectChanged;
+
         public void ChangeProject(Project project, ProjectState state);
+        public void PerformProjectChangeAction();
     }
 }

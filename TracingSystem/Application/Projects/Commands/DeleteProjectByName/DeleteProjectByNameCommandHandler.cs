@@ -34,11 +34,8 @@ namespace TracingSystem.Application.Projects.Commands.DeleteProjectByName
             _dbContext.Projects.Remove(project);
 
             if(_project.Name == project.Name)
-            {
-                _project.Name = string.Empty;
-                _project.Project = null;
-                _project.State = ProjectState.Startup;
-            }
+                _project.ChangeProject(null, ProjectState.Startup);
+
             await _dbContext.SaveChangesAsync(cancellationToken);
             return Result.Success();
         }

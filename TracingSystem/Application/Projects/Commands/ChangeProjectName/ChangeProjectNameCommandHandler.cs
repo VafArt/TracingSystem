@@ -28,7 +28,7 @@ namespace TracingSystem.Application.Projects.Commands.UpdateProject
             var project = await _dbContext.Projects.SingleOrDefaultAsync(project => project.Name == _project.Name);
             if (project == null) return Result.Failure(DomainErrors.Project.ProjectNotFound);
             project.Name = request.ProjectName;
-            _project.Name = request.ProjectName;
+            _project.ChangeProject(project, project.State);
             await _dbContext.SaveChangesAsync(cancellationToken);
             return Result.Success();
         }

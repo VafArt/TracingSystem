@@ -24,6 +24,7 @@ namespace TracingSystem.Application.Projects.Queries.GetProjectByName
         public async Task<Result<Project>> Handle(GetProjectByNameQuery request, CancellationToken cancellationToken)
         {
             var project = await _dbContext.Projects
+                .Include(project => project.Pcbs)
                 .FirstOrDefaultAsync(project => project.Name == request.Name);
             if (project == null) return Result.Failure(project, DomainErrors.Project.ProjectNotFound);
 

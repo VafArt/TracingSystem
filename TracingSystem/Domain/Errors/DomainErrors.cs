@@ -20,8 +20,15 @@ namespace TracingSystem.Domain.Errors
                 "Нет ни одного проекта!");
 
             public static readonly Error ProjectNotFound = new Error(
-                "Project.NoSuchProject",
+                "Project.NotFound",
                 "Проект не найден!");
+        }
+
+        public static class Pcb
+        {
+            public static readonly Error PcbNotFound = new Error(
+                "Pcb.NotFound",
+                "Плата не найдена!");
         }
     }
 }

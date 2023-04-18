@@ -48,6 +48,9 @@
             this.addLayerMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.openPcbLib = new System.Windows.Forms.ToolStripMenuItem();
             this.changeProjectNameMenu = new System.Windows.Forms.ToolStripMenuItem();
+            this.addPcbToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.deletePcbToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.changePcbNameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.runMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.runTraceMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.runBundleMenu = new System.Windows.Forms.ToolStripMenuItem();
@@ -59,6 +62,7 @@
             this.addTraceTool = new System.Windows.Forms.ToolStripButton();
             this.removeTraceTool = new System.Windows.Forms.ToolStripButton();
             this.runTool = new System.Windows.Forms.ToolStripButton();
+            this.toolStripChoosePcb = new System.Windows.Forms.ToolStripComboBox();
             this.status = new System.Windows.Forms.StatusStrip();
             this.xStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.yStatus = new System.Windows.Forms.ToolStripStatusLabel();
@@ -174,7 +178,10 @@
             this.removeTraceMenu,
             this.addLayerMenu,
             this.openPcbLib,
-            this.changeProjectNameMenu});
+            this.changeProjectNameMenu,
+            this.addPcbToolStripMenuItem,
+            this.deletePcbToolStripMenuItem,
+            this.changePcbNameToolStripMenuItem});
             this.editMenu.Name = "editMenu";
             this.editMenu.Size = new System.Drawing.Size(99, 22);
             this.editMenu.Text = "Редактировать";
@@ -224,6 +231,27 @@
             this.changeProjectNameMenu.Text = "Изменить название проекта";
             this.changeProjectNameMenu.Click += new System.EventHandler(this.changeProjectNameMenu_Click);
             // 
+            // addPcbToolStripMenuItem
+            // 
+            this.addPcbToolStripMenuItem.Name = "addPcbToolStripMenuItem";
+            this.addPcbToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.addPcbToolStripMenuItem.Text = "Добавить плату";
+            this.addPcbToolStripMenuItem.Click += new System.EventHandler(this.addPcbToolStripMenuItem_Click);
+            // 
+            // deletePcbToolStripMenuItem
+            // 
+            this.deletePcbToolStripMenuItem.Name = "deletePcbToolStripMenuItem";
+            this.deletePcbToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.deletePcbToolStripMenuItem.Text = "Удалить плату";
+            this.deletePcbToolStripMenuItem.Click += new System.EventHandler(this.deletePcbToolStripMenuItem_Click);
+            // 
+            // changePcbNameToolStripMenuItem
+            // 
+            this.changePcbNameToolStripMenuItem.Name = "changePcbNameToolStripMenuItem";
+            this.changePcbNameToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.changePcbNameToolStripMenuItem.Text = "Изменить название платы";
+            this.changePcbNameToolStripMenuItem.Click += new System.EventHandler(this.changePcbNameToolStripMenuItem_Click);
+            // 
             // runMenu
             // 
             this.runMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -263,7 +291,8 @@
             this.removeElementTool,
             this.addTraceTool,
             this.removeTraceTool,
-            this.runTool});
+            this.runTool,
+            this.toolStripChoosePcb});
             this.toolStrip.Location = new System.Drawing.Point(0, 24);
             this.toolStrip.Name = "toolStrip";
             this.toolStrip.Size = new System.Drawing.Size(862, 39);
@@ -323,6 +352,12 @@
             this.runTool.Name = "runTool";
             this.runTool.Size = new System.Drawing.Size(36, 36);
             this.runTool.Text = "toolStripButton1";
+            // 
+            // toolStripChoosePcb
+            // 
+            this.toolStripChoosePcb.Name = "toolStripChoosePcb";
+            this.toolStripChoosePcb.Size = new System.Drawing.Size(121, 39);
+            this.toolStripChoosePcb.Text = "Выбрать плату";
             // 
             // status
             // 
@@ -452,5 +487,9 @@
         private ToolStripStatusLabel projectNameStatus;
         private ToolStripMenuItem openPcbLib;
         private ToolStripMenuItem changeProjectNameMenu;
+        private ToolStripComboBox toolStripChoosePcb;
+        private ToolStripMenuItem addPcbToolStripMenuItem;
+        private ToolStripMenuItem deletePcbToolStripMenuItem;
+        private ToolStripMenuItem changePcbNameToolStripMenuItem;
     }
 }
