@@ -36,10 +36,35 @@ namespace TracingSystem.Persistance
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<Project>()
+                .HasMany(project => project.Pcbs)
+                .WithOne(pcb => pcb.Project)
+                .HasForeignKey(pcb => pcb.ProjectId);
+
+            modelBuilder.Entity<Pcb>()
+                .HasMany(pcb => pcb.Layers)
+                .WithOne(layer => layer.Pcb)
+                .HasForeignKey(layer => layer.PcbId);
+
+            modelBuilder.Entity<Layer>()
+                .HasMany(layer => layer.Traces)
+                .WithOne(trace => trace.Layer)
+                .HasForeignKey(trace => trace.LayerId);
+
+            modelBuilder.Entity<Layer>()
+                .HasMany(layer => layer.Elements)
+                .WithOne(element => element.Layer)
+                .HasForeignKey(element => element.LayerId);
+
+            modelBuilder.Entity<Trace>()
+                .HasMany(trace => trace.DirectionChangingCoords)
+                .WithOne(directionChangingCoord => directionChangingCoord.Trace)
+                .HasForeignKey(directionChangingCoord => directionChangingCoord.TraceId);
+
             modelBuilder.Entity<Element>()
-                .HasOne(element => element.Location)
-                .WithOne(elementPoint => elementPoint.Element)
-                .HasForeignKey(typeof(ElementPoint), "ElementId");
+                .HasMany(element => element.PadsCoords)
+                .WithOne(padsCoords => padsCoords.Element)
+                .HasForeignKey(padsCoords => padsCoords.ElementId);
         }
     }
 }

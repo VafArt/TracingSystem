@@ -58,5 +58,11 @@ namespace TracingSystem.Application.Services
         {
             ProjectChanged();
         }
+
+        public void ChangeProjectName(string name)
+        {
+            Project.Name = name;
+            Name = name;
+        }
     }
 }

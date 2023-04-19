@@ -358,6 +358,7 @@
             this.toolStripChoosePcb.Name = "toolStripChoosePcb";
             this.toolStripChoosePcb.Size = new System.Drawing.Size(121, 39);
             this.toolStripChoosePcb.Text = "Выбрать плату";
+            this.toolStripChoosePcb.TextChanged += new System.EventHandler(this.toolStripChoosePcb_TextChanged);
             // 
             // status
             // 

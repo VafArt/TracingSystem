@@ -25,14 +25,23 @@ namespace TracingSystem.Application.Projects.Commands.SaveProject
 
         public async Task<Result> Handle(SaveProjectCommand request, CancellationToken cancellationToken)
         {
-            var project = await _dbContext.Projects.AsNoTracking().SingleOrDefaultAsync(project => project.Id == request.Project.Id);
+            var project = await _dbContext.Projects.SingleOrDefaultAsync(project => project.Id == request.Project.Id);
             if (project == null) return Result.Failure(DomainErrors.Project.ProjectNotFound);
+
+            foreach(var pcb in request.Project.Pcbs)
+            {
+                foreach(var element in pcb.Layers.SelectMany(layer=>layer.Elements))
+                {
+                    element.LocationX = element.PictureBox.Location.X;
+                    element.LocationY = element.PictureBox.Location.Y;
+                }
+            }
 
             project.PcbLib = request.Project.PcbLib;
             project.Name = request.Project.Name;
             project.State = request.Project.State;
             project.Pcbs = request.Project.Pcbs;
-            _dbContext.ChangeTracker.DetectChanges();
+            //_dbContext.ChangeTracker.DetectChanges();
             await _dbContext.SaveChangesAsync(cancellationToken);
             _dbContext.ChangeTracker.Clear();
             return Result.Success();

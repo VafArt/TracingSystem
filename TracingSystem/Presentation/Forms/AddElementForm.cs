@@ -59,6 +59,7 @@ namespace TracingSystem.Presentation.Forms
             if(elementCount == 0) { MessageBox.Show("Некорректный ввод", "Ошибка!"); return; }
             SelectedComponentName = (sender as Button).Text;
             SelectedComponentCount = elementCount;
+            DialogResult= DialogResult.OK;
             Close();
         }
     }

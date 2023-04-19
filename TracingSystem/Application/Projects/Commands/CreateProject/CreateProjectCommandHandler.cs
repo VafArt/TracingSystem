@@ -36,6 +36,15 @@ namespace TracingSystem.Application.Projects.Commands.CreateProject
                     new Pcb()
                     {
                         Name = request.Name + " плата",
+                        Layers= new List<Layer>()
+                        {
+                            new Layer()
+                            {
+                                Number = 1,
+                                Traces = new List<Trace>(),
+                                Elements = new List<Element>()
+                            }
+                        }
                     }
                 }
             };

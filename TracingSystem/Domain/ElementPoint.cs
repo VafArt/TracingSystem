@@ -12,5 +12,11 @@ namespace TracingSystem.Domain
         public int ElementId { get; set; }
 
         public Element Element { get; set; }
+
+        public ElementPoint() : base() { }
+
+        public ElementPoint(float x, float y) : base(x, y) { }
+
+        public ElementPoint(PointF point) : base(point) { }
     }
 }

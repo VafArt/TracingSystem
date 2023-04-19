@@ -24,5 +24,7 @@ namespace TracingSystem.Application.Services
 
         public void ChangeProject(Project project, ProjectState state);
         public void PerformProjectChangeAction();
+
+        public void ChangeProjectName(string name);
     }
 }

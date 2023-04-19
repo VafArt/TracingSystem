@@ -25,6 +25,13 @@ namespace TracingSystem.Application.Projects.Queries.GetProjectByName
         {
             var project = await _dbContext.Projects
                 .Include(project => project.Pcbs)
+                .ThenInclude(pcb=>pcb.Layers)
+                .ThenInclude(layer=>layer.Elements)
+                .ThenInclude(element=>element.PadsCoords)
+                .Include(project => project.Pcbs)
+                .ThenInclude(pcb => pcb.Layers)
+                .ThenInclude(layer => layer.Traces)
+                .ThenInclude(trace => trace.DirectionChangingCoords)
                 .FirstOrDefaultAsync(project => project.Name == request.Name);
             if (project == null) return Result.Failure(project, DomainErrors.Project.ProjectNotFound);
 

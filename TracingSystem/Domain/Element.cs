@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TracingSystem.Application.Common.Abstractions;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TracingSystem.Domain
 {
@@ -16,12 +17,19 @@ namespace TracingSystem.Domain
 
         public string Name { get; set; }
 
-        public ElementPoint Location { get; set; }
+        //public ElementPoint Location { get; set; }
+
+        public int LocationX { get; set; }
+
+        public int LocationY { get; set; }
 
         public ICollection<ElementPoint>? PadsCoords { get; set; }
 
         public byte[]? Image { get; set; }
 
         public Layer Layer { get; set; }
+
+        [NotMapped]
+        public PictureBox PictureBox { get; set; }
     }
 }
