@@ -47,6 +47,7 @@ namespace TracingSystem
             _project.NameChanged += () => projectNameStatus.Text = $"Название проекта: {_project.Name}";
             _project.StateChanged += OnStateChanged;
             _project.ProjectChanged += OnProjectChanged;
+
             toolStrip.ImageScalingSize = DeviceDpi > 150 ? new Size(32, 32) : new Size(18, 18);
         }
 
@@ -544,6 +545,36 @@ namespace TracingSystem
                     element.LocationY = pictureBox.Location.Y;
                 };
 
+                pictureBox.MouseDown += (sender, args) =>
+                {
+                    if(_project.SelectedElement != null)
+                    {
+                        var pictureBox = _project.Project.Pcbs
+                        .FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text)
+                        .Layers
+                        .SelectMany(layer => layer.Elements)
+                        .FirstOrDefault(element => element.PictureBox == _project.SelectedElement.PictureBox).PictureBox;
+
+                        using (var g = Graphics.FromImage(_project.SelectedElement.PictureBox.Image))
+                        {
+                            _project.SelectedElement.PictureBox = pictureBox;
+                            _project.SelectedElement.PictureBox.Invalidate();
+                        }
+                    }
+
+                    _project.SelectedElement = _project.Project.Pcbs
+                    .FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text)
+                    .Layers
+                    .SelectMany(layer => layer.Elements)
+                    .FirstOrDefault(element => element.PictureBox == sender as PictureBox);
+
+                    using (var g = Graphics.FromImage(_project.SelectedElement.PictureBox.Image))
+                    {
+                        g.DrawRectangle(new Pen(Color.Blue), new Rectangle(0, 0, pictureBox.Width - 1, pictureBox.Height - 1));
+                        _project.SelectedElement.PictureBox.Invalidate();
+                    }
+                };
+
                 var elementToAdd = new Element()
                 {
                     Name = component.Pattern,
@@ -666,6 +697,11 @@ namespace TracingSystem
                 }
 
             }
+        }
+
+        private void removeElementMenu_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

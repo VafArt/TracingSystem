@@ -12,11 +12,28 @@ namespace TracingSystem.Application.Services
     {
         public Project? Project { get; private set; }
 
-        public event Action NameChanged;
+        public event Action? NameChanged;
 
-        public event Action StateChanged;
+        public event Action? StateChanged;
 
-        public event Action ProjectChanged;
+        public event Action? ProjectChanged;
+
+        public event Action? SelectedElementChanged;
+
+        private Element selectedElement;
+        public Element SelectedElement 
+        { 
+            get
+            {
+                return selectedElement;
+            }
+            set
+            {
+                selectedElement = value;
+                if(SelectedElementChanged != null)
+                    SelectedElementChanged();
+            }
+        }
 
         private string name;
         public string Name
@@ -28,7 +45,8 @@ namespace TracingSystem.Application.Services
             private set
             {
                 name = value;
-                NameChanged();
+                if (NameChanged != null)
+                    NameChanged();
             }
         }
 
@@ -42,7 +60,8 @@ namespace TracingSystem.Application.Services
             private set
             {
                 state = value;
-                StateChanged();
+                if (StateChanged != null)
+                    StateChanged();
             }
         }
 
@@ -51,12 +70,14 @@ namespace TracingSystem.Application.Services
             Project = project;
             Name = project?.Name;
             State = state;
-            ProjectChanged();
+            if (ProjectChanged != null)
+                ProjectChanged();
         }
 
         public void PerformProjectChangeAction()
         {
-            ProjectChanged();
+            if (ProjectChanged != null)
+                ProjectChanged();
         }
 
         public void ChangeProjectName(string name)

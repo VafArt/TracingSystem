@@ -204,6 +204,7 @@
             this.removeElementMenu.Name = "removeElementMenu";
             this.removeElementMenu.Size = new System.Drawing.Size(228, 22);
             this.removeElementMenu.Text = "Удалить элемент";
+            this.removeElementMenu.Click += new System.EventHandler(this.removeElementMenu_Click);
             // 
             // removeTraceMenu
             // 

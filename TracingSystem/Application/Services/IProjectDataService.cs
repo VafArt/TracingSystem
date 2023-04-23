@@ -16,11 +16,15 @@ namespace TracingSystem.Application.Services
 
         public ProjectState State { get; }
 
+        public Element SelectedElement { get; set; }
+
         public event Action NameChanged;
 
         public event Action StateChanged;
 
         public event Action ProjectChanged;
+
+        public event Action SelectedElementChanged;
 
         public void ChangeProject(Project project, ProjectState state);
         public void PerformProjectChangeAction();
