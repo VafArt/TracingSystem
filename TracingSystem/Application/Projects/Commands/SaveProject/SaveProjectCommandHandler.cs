@@ -32,8 +32,8 @@ namespace TracingSystem.Application.Projects.Commands.SaveProject
             {
                 foreach(var element in pcb.Layers.SelectMany(layer=>layer.Elements))
                 {
-                    element.LocationX = element.PictureBox.Location.X;
-                    element.LocationY = element.PictureBox.Location.Y;
+                    element.LocationX = element.ElementControl.Location.X;
+                    element.LocationY = element.ElementControl.Location.Y;
                 }
             }
 

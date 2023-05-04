@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using OriginalCircuit.AltiumSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,7 @@ namespace TracingSystem.Application
         {
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
             services.AddSingleton<IProjectDataService, ProjectDataService>();
+            services.AddSingleton<PcbLibReader>();
             return services;
         }
     }

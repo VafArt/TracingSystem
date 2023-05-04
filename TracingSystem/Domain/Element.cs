@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TracingSystem.Application.Common.Abstractions;
 using System.ComponentModel.DataAnnotations.Schema;
+using TracingSystem.Application.Controls;
 
 namespace TracingSystem.Domain
 {
@@ -30,6 +31,6 @@ namespace TracingSystem.Domain
         public Layer Layer { get; set; }
 
         [NotMapped]
-        public PictureBox PictureBox { get; set; }
+        public ElementControl ElementControl { get; set; }
     }
 }

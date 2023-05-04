@@ -4,10 +4,12 @@ using Microsoft.Extensions.DependencyInjection;
 using OriginalCircuit.AltiumSharp;
 using OriginalCircuit.AltiumSharp.Drawing;
 using OriginalCircuit.AltiumSharp.Records;
+using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Windows.Forms;
 using TracingSystem.Application.Common.Abstractions;
+using TracingSystem.Application.Controls;
 using TracingSystem.Application.Projects.Commands.CreateProject;
 using TracingSystem.Application.Projects.Commands.SaveProject;
 using TracingSystem.Application.Projects.Commands.UpdateProject;
@@ -39,7 +41,7 @@ namespace TracingSystem
             Mediator = Program.ServiceProvider.GetRequiredService<IMediator>();
             _project = Program.ServiceProvider.GetRequiredService<IProjectDataService>();
             _pcbLibRenderer = new PcbLibRenderer();
-            _pcbLibReader = new PcbLibReader();
+            _pcbLibReader = Program.ServiceProvider.GetRequiredService<PcbLibReader>();
 
             InitializeComponent();
             AlignStatusStrip();
@@ -93,7 +95,7 @@ namespace TracingSystem
             toolStripChoosePcb.Items.Clear();
             toolStripChoosePcb.Text = "Выбрать плату";
             if (_project.Project is null) return;
-            foreach(var pcb in _project.Project.Pcbs)
+            foreach (var pcb in _project.Project.Pcbs)
                 toolStripChoosePcb.Items.Add(pcb.Name);
         }
 
@@ -258,7 +260,7 @@ namespace TracingSystem
 
         private async void createProjectMenu_Click(object sender, EventArgs e)
         {
-            if(_project.State != ProjectState.Startup) 
+            if (_project.State != ProjectState.Startup)
             {
                 var messageBoxResult = MessageBox.Show("Сохранить текущий проект?", "Созданение", MessageBoxButtons.YesNoCancel);
                 if (messageBoxResult == DialogResult.Cancel) return;
@@ -324,7 +326,7 @@ namespace TracingSystem
                 var saveResult = await Mediator.Send(saveProjectCommand);
                 if (saveResult.IsFailure) { MessageBox.Show(saveResult.Error.Message, "Ошибка!"); return; }
             }
-            if(messageBoxResult == DialogResult.No) 
+            if (messageBoxResult == DialogResult.No)
             {
                 _dbContext.ChangeTracker.Clear();
             };
@@ -386,7 +388,7 @@ namespace TracingSystem
         private void toolStrip_LayoutCompleted(object sender, EventArgs e)
         {
             var toolStrip = (ToolStrip)sender;
-            toolStrip.ImageScalingSize = DeviceDpi>150 ? new Size(32,32) : new Size(18,18);
+            toolStrip.ImageScalingSize = DeviceDpi > 150 ? new Size(32, 32) : new Size(18, 18);
             toolStrip.Invalidate();
         }
 
@@ -429,7 +431,7 @@ namespace TracingSystem
             var openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "PCBLIB(*.pcblib)|*.pcblib";
             openFileDialog.RestoreDirectory = true;
-            if(openFileDialog.ShowDialog() == DialogResult.OK)
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
                 using (var stream = new FileStream(openFileDialog.FileName, FileMode.Open))
                 {
@@ -444,7 +446,7 @@ namespace TracingSystem
                         {
                             componentNames.Add(component.Pattern);
                         }
-                        var project = _dbContext.Projects.FirstOrDefault(project=>project.Name == _project.Name);
+                        var project = _dbContext.Projects.FirstOrDefault(project => project.Name == _project.Name);
                         project.PossibleElementNamesJson = JsonSerializer.Serialize(componentNames);
                         _project.Project.PossibleElementNamesJson = project.PossibleElementNamesJson;
                         await _dbContext.SaveChangesAsync(CancellationToken.None);
@@ -475,13 +477,11 @@ namespace TracingSystem
 
             for (int i = 0; i < addElementForm.SelectedComponentCount; i++)
             {
-                await RenderPcbComponentAndAddToProject(component);
+                AddElementToProject(component);
             }
         }
 
-        private int _componentX;
-        private int _componentY;
-        private async Task RenderPcbComponentAndAddToProject(PcbComponent component)
+        private Bitmap RenderPcbComponent(PcbComponent component)
         {
             _pcbLibRenderer.Component = component;
             _pcbLibRenderer.Zoom = 3;
@@ -492,12 +492,10 @@ namespace TracingSystem
             var height = (int)Math.Round(_pcbLibRenderer.ScaleCoord(rect.Height));
 
             var image = new Bitmap(width, height);
-            var pictureBox = new PictureBox();
-            pictureBox.Size = new Size(width, height);
 
             using (var g = Graphics.FromImage(image))
             {
-                _pcbLibRenderer.Render(g, pictureBox.Width, pictureBox.Height, true, false);
+                _pcbLibRenderer.Render(g, width, height, true, false);
                 var pads = component.Primitives.Where(primitive => primitive is PcbPad).Select(pad => pad as PcbPad);
                 var padsPoints = pads.Select(pad => Tuple.Create(_pcbLibRenderer.ScreenFromWorld(pad.Location.X, pad.Location.Y), pad.Size)).ToList();
 
@@ -510,103 +508,106 @@ namespace TracingSystem
                         _pcbLibRenderer.ScaleCoord(pad.Item2.Y));
 
                 }
+            }
+            return image;
+        }
 
-                pictureBox.Image = image;
-                workSpace.Controls.Add(pictureBox);
-                pictureBox.Invalidate();
+        private int _componentX;
+        private int _componentY;
+        private void AddElementToProject(PcbComponent component)
+        {
+            var image = RenderPcbComponent(component);
+
+            var elementControl = new ElementControl();
+            elementControl.Width = image.Width;
+            elementControl.Height = image.Height;
+            elementControl.Image = image;
+            elementControl.PcbComponent = component;
+            workSpace.Controls.Add(elementControl);
+            elementControl.Invalidate();
 
 
-                pictureBox.MouseDown += (sender, args) =>
+            elementControl.MouseDown += (sender, args) =>
+            {
+                _componentX = args.X;
+                _componentY = args.Y;
+            };
+            elementControl.MouseMove += (sender, args) =>
+            {
+                if ((MouseButtons & MouseButtons.Left) != 0)
                 {
-                    _componentX = args.X;
-                    _componentY = args.Y;
-                };
-
-                pictureBox.MouseMove += (sender, args) =>
-                {
-                    if ((MouseButtons & MouseButtons.Left) != 0)
-                    {
-                        var deltaX = args.X - _componentX;
-                        var deltaY = args.Y - _componentY;
-                        var pictureBox = sender as PictureBox;
-                        pictureBox.Location = new Point(pictureBox.Location.X + deltaX, pictureBox.Location.Y + deltaY);
-                    }
-                };
-
-                pictureBox.LocationChanged += (sender, args) =>
-                {
+                    var deltaX = args.X - _componentX;
+                    var deltaY = args.Y - _componentY;
                     var pictureBox = sender as PictureBox;
-                    var element = _project.Project.Pcbs
-                    .FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text)
-                    .Layers
-                    .SelectMany(layer => layer.Elements)
-                    .FirstOrDefault(element => element.PictureBox == pictureBox);
-                    element.LocationX = pictureBox.Location.X;
-                    element.LocationY = pictureBox.Location.Y;
-                };
+                    pictureBox.Location = new Point(pictureBox.Location.X + deltaX, pictureBox.Location.Y + deltaY);
+                }
+            };
+            elementControl.LocationChanged += (sender, args) =>
+            {
+                var elementControl = sender as ElementControl;
+                var element = _project.Project.Pcbs
+                .FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text)
+                .Layers
+                .SelectMany(layer => layer.Elements)
+                .FirstOrDefault(element => element.ElementControl == elementControl);
+                element.LocationX = elementControl.Location.X;
+                element.LocationY = elementControl.Location.Y;
+            };
 
-                pictureBox.MouseDown += (sender, args) =>
+            elementControl.MouseDown += (sender, args) =>
+            {
+                if (_project.SelectedElement != null)
                 {
-                    if(_project.SelectedElement != null)
-                    {
-                        var pictureBox = _project.Project.Pcbs
-                        .FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text)
-                        .Layers
-                        .SelectMany(layer => layer.Elements)
-                        .FirstOrDefault(element => element.PictureBox == _project.SelectedElement.PictureBox).PictureBox;
-
-                        using (var g = Graphics.FromImage(_project.SelectedElement.PictureBox.Image))
-                        {
-                            _project.SelectedElement.PictureBox = pictureBox;
-                            _project.SelectedElement.PictureBox.Invalidate();
-                        }
-                    }
-
-                    _project.SelectedElement = _project.Project.Pcbs
-                    .FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text)
-                    .Layers
-                    .SelectMany(layer => layer.Elements)
-                    .FirstOrDefault(element => element.PictureBox == sender as PictureBox);
-
-                    using (var g = Graphics.FromImage(_project.SelectedElement.PictureBox.Image))
-                    {
-                        g.DrawRectangle(new Pen(Color.Blue), new Rectangle(0, 0, pictureBox.Width - 1, pictureBox.Height - 1));
-                        _project.SelectedElement.PictureBox.Invalidate();
-                    }
-                };
-
-                var elementToAdd = new Element()
-                {
-                    Name = component.Pattern,
-                    PictureBox = pictureBox,
-                    //Location = new ElementPoint(pictureBox.Location),
-                    LocationX = pictureBox.Location.X,
-                    LocationY = pictureBox.Location.Y,
-                    Image = Domain.Shared.ImageConverter.ImageToByteArray(image),
-                    PadsCoords = new List<ElementPoint>()
-                };
-
-                foreach(var pad in padsPoints)
-                {
-                    elementToAdd.PadsCoords.Add(new ElementPoint(
-                        pad.Item1.X - (_pcbLibRenderer.ScaleCoord(pad.Item2.X) / 2),
-                        pad.Item1.Y - (_pcbLibRenderer.ScaleCoord(pad.Item2.Y) / 2)
-                        ));
+                    _project.SelectedElement.ElementControl.Image = RenderPcbComponent(_project.SelectedElement.ElementControl.PcbComponent);
+                    _project.SelectedElement.ElementControl.Invalidate();
                 }
 
-                _project.Project.Pcbs
-                    .FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text)
-                    ?.Layers.FirstOrDefault()
-                    ?.Elements.Add(elementToAdd);
+                _project.SelectedElement = _project.Project.Pcbs
+                .FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text)
+                .Layers
+                .SelectMany(layer => layer.Elements)
+                .FirstOrDefault(element => element.ElementControl == sender as ElementControl);
+
+                using (var g = Graphics.FromImage(_project.SelectedElement.ElementControl.Image))
+                {
+                    g.DrawRectangle(new Pen(Color.Blue), new Rectangle(0, 0, elementControl.Width - 1, elementControl.Height - 1));
+                    _project.SelectedElement.ElementControl.Invalidate();
+                }
+            };
+
+            var elementToAdd = new Element()
+            {
+                Name = component.Pattern,
+                ElementControl = elementControl,
+                LocationX = elementControl.Location.X,
+                LocationY = elementControl.Location.Y,
+                Image = Domain.Shared.ImageConverter.ImageToByteArray(image),
+                PadsCoords = new List<ElementPoint>()
+            };
+            elementToAdd.ElementControl.PcbComponent = component;
+
+            var pads = component.Primitives.Where(primitive => primitive is PcbPad).Select(pad => pad as PcbPad);
+            var padsPoints = pads.Select(pad => Tuple.Create(_pcbLibRenderer.ScreenFromWorld(pad.Location.X, pad.Location.Y), pad.Size)).ToList();
+            foreach (var pad in padsPoints)
+            {
+                elementToAdd.PadsCoords.Add(new ElementPoint(
+                    pad.Item1.X - (_pcbLibRenderer.ScaleCoord(pad.Item2.X) / 2),
+                    pad.Item1.Y - (_pcbLibRenderer.ScaleCoord(pad.Item2.Y) / 2)
+                    ));
             }
+
+            _project.Project.Pcbs
+                .FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text)
+                ?.Layers.FirstOrDefault()
+                ?.Elements.Add(elementToAdd);
         }
 
         private void addPcbToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var newPcbName = Microsoft.VisualBasic.Interaction.InputBox("Введите название платы:", "Добавление новой платы");
             if (newPcbName == null) { MessageBox.Show("Некорректный ввод!", "Ошибка!"); return; }
-            _project.Project.Pcbs.Add(new Pcb() 
-            { 
+            _project.Project.Pcbs.Add(new Pcb()
+            {
                 Name = newPcbName,
                 Layers = new List<Layer>()
                 {
@@ -625,7 +626,7 @@ namespace TracingSystem
             var pcbToDeleteName = toolStripChoosePcb.SelectedItem as string;
             if (pcbToDeleteName == null) { MessageBox.Show("Выберите плату для удаления", "Ошибка!"); return; }
             var pcbToDelete = _project.Project.Pcbs.FirstOrDefault(pcb => pcb.Name == pcbToDeleteName);
-            if(pcbToDelete == null) { MessageBox.Show(DomainErrors.Pcb.PcbNotFound.Message, "Ошибка!"); return; }
+            if (pcbToDelete == null) { MessageBox.Show(DomainErrors.Pcb.PcbNotFound.Message, "Ошибка!"); return; }
             _project.Project.Pcbs.Remove(pcbToDelete);
             _project.PerformProjectChangeAction();
         }
@@ -638,7 +639,7 @@ namespace TracingSystem
             if (pcbToUpdate == null) { MessageBox.Show(DomainErrors.Pcb.PcbNotFound.Message, "Ошибка!"); return; }
 
             var newName = Microsoft.VisualBasic.Interaction.InputBox("Введите новое название платы:", "Изменение платы");
-            if(newName is null) { MessageBox.Show("Некорректный ввод!", "Ошибка!"); return; }
+            if (newName is null) { MessageBox.Show("Некорректный ввод!", "Ошибка!"); return; }
 
             pcbToUpdate.Name = newName;
             _project.PerformProjectChangeAction();
@@ -668,20 +669,21 @@ namespace TracingSystem
                     .Elements;
                 foreach (var element in elements)
                 {
-                    var pictureBox = new PictureBox();
-                    pictureBox.Location = new Point(element.LocationX, element.LocationY);
+                    var elementControl = new ElementControl();
+                    elementControl.Location = new Point(element.LocationX, element.LocationY);
                     var image = Domain.Shared.ImageConverter.ByteArrayToImage(element.Image);
-                    pictureBox.Size = image.Size;
-                    pictureBox.Image = image;
-                    workSpace.Controls.Add(pictureBox);
+                    elementControl.Size = image.Size;
+                    elementControl.Image = image;
+                    elementControl.PcbComponent = element.ElementControl.PcbComponent;
+                    workSpace.Controls.Add(elementControl);
 
-                    pictureBox.MouseDown += (sender, args) =>
+                    elementControl.MouseDown += (sender, args) =>
                     {
                         _componentX = args.X;
                         _componentY = args.Y;
                     };
 
-                    pictureBox.MouseMove += (sender, args) =>
+                    elementControl.MouseMove += (sender, args) =>
                     {
                         if ((MouseButtons & MouseButtons.Left) != 0)
                         {
@@ -692,8 +694,29 @@ namespace TracingSystem
                         }
                     };
 
-                    pictureBox.Invalidate();
-                    element.PictureBox = pictureBox;
+                    elementControl.MouseDown += (sender, args) =>
+                    {
+                        if (_project.SelectedElement != null)
+                        {
+                            _project.SelectedElement.ElementControl.Image = RenderPcbComponent(_project.SelectedElement.ElementControl.PcbComponent);
+                            _project.SelectedElement.ElementControl.Invalidate();
+                        }
+
+                        _project.SelectedElement = _project.Project.Pcbs
+                        .FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text)
+                        .Layers
+                        .SelectMany(layer => layer.Elements)
+                        .FirstOrDefault(element => element.ElementControl == sender as ElementControl);
+
+                        using (var g = Graphics.FromImage(_project.SelectedElement.ElementControl.Image))
+                        {
+                            g.DrawRectangle(new Pen(Color.Blue), new Rectangle(0, 0, elementControl.Width - 1, elementControl.Height - 1));
+                            _project.SelectedElement.ElementControl.Invalidate();
+                        }
+                    };
+
+                    elementControl.Invalidate();
+                    element.ElementControl = elementControl;
                 }
 
             }
