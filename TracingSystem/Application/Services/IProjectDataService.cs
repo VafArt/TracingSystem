@@ -17,7 +17,7 @@ namespace TracingSystem.Application.Services
 
         public ProjectState State { get; }
 
-        public Element SelectedElement { get; set; }
+        public Element? SelectedElement { get; set; }
 
         public event Action NameChanged;
 

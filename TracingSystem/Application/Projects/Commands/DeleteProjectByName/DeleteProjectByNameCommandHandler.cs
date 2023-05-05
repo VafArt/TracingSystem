@@ -28,7 +28,7 @@ namespace TracingSystem.Application.Projects.Commands.DeleteProjectByName
         public async Task<Result> Handle(DeleteProjectByNameCommand request, CancellationToken cancellationToken)
         {
             var project = await _dbContext.Projects
-                .SingleOrDefaultAsync(project => project.Name == request.ProjectName);
+                .FirstOrDefaultAsync(project => project.Name == request.ProjectName);
             if (project == null) return Result.Failure(project, DomainErrors.Project.ProjectNotFound);
 
             _dbContext.Projects.Remove(project);

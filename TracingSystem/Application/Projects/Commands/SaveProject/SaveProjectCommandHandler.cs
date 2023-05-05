@@ -25,7 +25,7 @@ namespace TracingSystem.Application.Projects.Commands.SaveProject
 
         public async Task<Result> Handle(SaveProjectCommand request, CancellationToken cancellationToken)
         {
-            var project = await _dbContext.Projects.SingleOrDefaultAsync(project => project.Id == request.Project.Id);
+            var project = await _dbContext.Projects.FirstOrDefaultAsync(project => project.Id == request.Project.Id, cancellationToken);
             if (project == null) return Result.Failure(DomainErrors.Project.ProjectNotFound);
 
             foreach(var pcb in request.Project.Pcbs)
@@ -41,7 +41,6 @@ namespace TracingSystem.Application.Projects.Commands.SaveProject
             project.Name = request.Project.Name;
             project.State = request.Project.State;
             project.Pcbs = request.Project.Pcbs;
-            //_dbContext.ChangeTracker.DetectChanges();
             await _dbContext.SaveChangesAsync(cancellationToken);
             _dbContext.ChangeTracker.Clear();
             return Result.Success();

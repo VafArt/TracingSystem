@@ -40,7 +40,7 @@ namespace TracingSystem.Application.Projects.Queries.GetProjectByName
                 .ThenInclude(trace => trace.DirectionChangingCoords)
                 .FirstOrDefaultAsync(project => project.Name == request.Name);
             if (project == null) return Result.Failure(project, DomainErrors.Project.ProjectNotFound);
-            if (project.PcbLib.Length != 0)
+            if (project.PcbLib?.Length != 0 && project.PcbLib?.Length is not null)
             {
                 var mem = new MemoryStream(project.PcbLib);
                 var components = _pcbLibReader.Read(mem).Items;
@@ -54,7 +54,9 @@ namespace TracingSystem.Application.Projects.Queries.GetProjectByName
                         Image = image,
                         Width = image.Width,
                         Height = image.Height,
-                        PcbComponent = components.FirstOrDefault(component => component.Pattern == element.Name)
+                        PcbComponent = components.FirstOrDefault(component => component.Pattern == element.Name),
+                        Element = element,
+                        Location = new Point(element.LocationX, element.LocationY),
                     };
                 }
                 mem.Dispose();

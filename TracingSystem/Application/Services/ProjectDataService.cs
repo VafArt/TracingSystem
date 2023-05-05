@@ -21,8 +21,8 @@ namespace TracingSystem.Application.Services
 
         public event Action? SelectedElementChanged;
 
-        private Element selectedElement;
-        public Element SelectedElement 
+        private Element? selectedElement;
+        public Element? SelectedElement 
         { 
             get
             {
