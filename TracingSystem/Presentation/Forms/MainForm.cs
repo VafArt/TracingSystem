@@ -642,7 +642,15 @@ namespace TracingSystem
 
         private void removeElementMenu_Click(object sender, EventArgs e)
         {
+            if(_project.SelectedElement == null) { MessageBox.Show("Выберите элемент для удаления!", "Ошибка!"); return; }
 
+            var layer = _project.Project?.Pcbs
+                ?.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text)
+                ?.Layers
+                ?.FirstOrDefault(layer => layer.Elements.Contains(_project.SelectedElement));
+            layer?.Elements.Remove(_project.SelectedElement);
+            workSpace.Controls.Remove(_project.SelectedElement.ElementControl);
+            _project.SelectedElement = null;
         }
     }
 }

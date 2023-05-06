@@ -15,7 +15,7 @@ namespace TracingSystem.Persistance
         {
             services.AddDbContext<TracingSystemDbContext>(options =>
             {
-                options.UseSqlite("Data Source=TracingSyatem.db");
+                options.UseSqlite("Data Source=TracingSystem.db");
             })
                 .AddScoped<ITracingSystemDbContext>(provider =>
                 provider.GetService<TracingSystemDbContext>());
