@@ -9,11 +9,11 @@ namespace TracingSystem.Domain
 {
     public class Pad
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; }
 
         public int ElementId { get; set; }
 
-        public Guid ConnectedPadId { get; set; }
+        public int? ConnectedPadId { get; set; }
 
         public float CenterX { get; set; }
 
@@ -22,6 +22,8 @@ namespace TracingSystem.Domain
         public float SizeX { get; set; }
 
         public float SizeY { get; set; }
+
+        public Pad? ConnectedPad { get; set; }
 
         public Element Element { get; set; }
     }

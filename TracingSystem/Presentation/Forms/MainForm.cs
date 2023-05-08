@@ -386,12 +386,11 @@ namespace TracingSystem
             if (pads is null) return;
             foreach (var firstPad in pads)
             {
-                if (firstPad.ConnectedPadId != Guid.Empty)
+                if (firstPad.ConnectedPad != null)
                 {
-                    var secondPad = pads.First(secondPad => secondPad.Id == firstPad.ConnectedPadId);
                     g.DrawLine(new Pen(Color.Red, 3),
                     new PointF(firstPad.Element.LocationX + firstPad.CenterX, firstPad.Element.LocationY + firstPad.CenterY),
-                    new PointF(secondPad.Element.LocationX + secondPad.CenterX, secondPad.Element.LocationY + secondPad.CenterY));
+                    new PointF(firstPad.ConnectedPad.Element.LocationX + firstPad.ConnectedPad.CenterX, firstPad.ConnectedPad.Element.LocationY + firstPad.ConnectedPad.CenterY));
                 }
             }
         }
@@ -546,11 +545,11 @@ namespace TracingSystem
                                 _project.SelectedElement = null;
                             }
                             else if (_project.SelectedPad.Element == pad.Element) { break; }
-                            else if (_project.SelectedPad.ConnectedPadId != Guid.Empty) { _project.SelectedPad = null; break; }
+                            else if (_project.SelectedPad.ConnectedPadId != null) { _project.SelectedPad = null; break; }
                             else
                             {
-                                _project.SelectedPad.ConnectedPadId = pad.Id;
-                                pad.ConnectedPadId = _project.SelectedPad.Id;
+                                _project.SelectedPad.ConnectedPad = pad;
+                                pad.ConnectedPad = _project.SelectedPad;
                                 _project.SelectedPad = null;
                             }
                         }
@@ -630,7 +629,6 @@ namespace TracingSystem
                 var sizeY = _pcbLibRenderer.ScaleCoord(pad.Size.Y);
                 elementToAdd.Pads.Add(new Pad
                 {
-                    Id = Guid.NewGuid(),
                     CenterX = centerPoint.X,
                     CenterY = centerPoint.Y,
                     SizeX = sizeX,

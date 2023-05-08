@@ -67,14 +67,16 @@ namespace TracingSystem.Persistance
                 .WithOne(padsCoords => padsCoords.Element)
                 .HasForeignKey(padsCoords => padsCoords.ElementId);
 
-            //modelBuilder.Entity<Pad>()
-            //    .HasOne(pad => pad.ConnectedPad)
-            //    .WithOne(pad => pad.ThisPad)
-            //    .HasForeignKey<Pad>(pad => pad.ConnectedPadId)
-            //    .IsRequired(false)
-            //    .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Pad>()
+                .HasOne(pad => pad.ConnectedPad)
+                .WithOne()
+                .HasForeignKey<Pad>(pad => pad.ConnectedPadId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
 
-
+            modelBuilder.Entity<Pad>()
+                .HasIndex(pad => pad.ConnectedPadId)
+                .IsUnique(false);
         }
     }
 }
