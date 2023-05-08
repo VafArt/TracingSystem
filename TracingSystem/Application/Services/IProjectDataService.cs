@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,6 +19,10 @@ namespace TracingSystem.Application.Services
         public ProjectState State { get; }
 
         public Element? SelectedElement { get; set; }
+
+        public Pad? SelectedPad { get; set; }
+
+        public event Action SelectedPadChanged;
 
         public event Action NameChanged;
 

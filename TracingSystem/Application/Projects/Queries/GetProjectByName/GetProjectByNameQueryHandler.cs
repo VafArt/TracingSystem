@@ -33,7 +33,7 @@ namespace TracingSystem.Application.Projects.Queries.GetProjectByName
                 .Include(project => project.Pcbs)
                 .ThenInclude(pcb => pcb.Layers)
                 .ThenInclude(layer => layer.Elements)
-                .ThenInclude(element => element.PadsCoords)
+                .ThenInclude(element => element.Pads)
                 .Include(project => project.Pcbs)
                 .ThenInclude(pcb => pcb.Layers)
                 .ThenInclude(layer => layer.Traces)

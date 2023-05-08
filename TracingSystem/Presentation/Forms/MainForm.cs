@@ -5,6 +5,7 @@ using OriginalCircuit.AltiumSharp;
 using OriginalCircuit.AltiumSharp.Drawing;
 using OriginalCircuit.AltiumSharp.Records;
 using System.ComponentModel;
+using System.Drawing.Drawing2D;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Windows.Forms;
@@ -39,7 +40,10 @@ namespace TracingSystem
 
         public MainForm()
         {
+            DoubleBuffered = true;
+
             _dbContext = Program.ServiceProvider.GetRequiredService<ITracingSystemDbContext>();
+
             Mediator = Program.ServiceProvider.GetRequiredService<IMediator>();
             _project = Program.ServiceProvider.GetRequiredService<IProjectDataService>();
             _pcbLibRenderer = new PcbLibRenderer();
@@ -361,6 +365,7 @@ namespace TracingSystem
         private void workSpace_Paint(object sender, PaintEventArgs e)
         {
             var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.HighQuality;
             var workspace = (PictureBox)sender;
             for (decimal relX = 0; relX < workSpace.Width; relX += (Convert.ToDecimal(0.393701) * workSpace.DeviceDpi))
             {
@@ -370,6 +375,23 @@ namespace TracingSystem
                     var intRelX = (int)decimal.Round(relX);
                     var intRelY = (int)decimal.Round(relY);
                     g.FillRectangle(new SolidBrush(Color.Black), new Rectangle(intRelX, intRelY, dotWidth, dotWidth));
+                }
+            }
+
+            var pads = _project?.Project?.Pcbs
+                ?.FirstOrDefault(pcb => toolStripChoosePcb.Text == pcb.Name)
+                ?.Layers
+                ?.SelectMany(layer => layer.Elements
+                ?.SelectMany(element => element?.Pads));
+            if (pads is null) return;
+            foreach (var firstPad in pads)
+            {
+                if (firstPad.ConnectedPadId != Guid.Empty)
+                {
+                    var secondPad = pads.First(secondPad => secondPad.Id == firstPad.ConnectedPadId);
+                    g.DrawLine(new Pen(Color.Red, 3),
+                    new PointF(firstPad.Element.LocationX + firstPad.CenterX, firstPad.Element.LocationY + firstPad.CenterY),
+                    new PointF(secondPad.Element.LocationX + secondPad.CenterX, secondPad.Element.LocationY + secondPad.CenterY));
                 }
             }
         }
@@ -456,18 +478,18 @@ namespace TracingSystem
             using (var g = Graphics.FromImage(image))
             {
                 _pcbLibRenderer.Render(g, width, height, true, false);
-                var pads = component.Primitives.Where(primitive => primitive is PcbPad).Select(pad => pad as PcbPad);
-                var padsPoints = pads.Select(pad => Tuple.Create(_pcbLibRenderer.ScreenFromWorld(pad.Location.X, pad.Location.Y), pad.Size)).ToList();
+                //var pads = component.Primitives.Where(primitive => primitive is PcbPad).Select(pad => pad as PcbPad);
+                //var padsPoints = pads.Select(pad => Tuple.Create(_pcbLibRenderer.ScreenFromWorld(pad.Location.X, pad.Location.Y), pad.Size)).ToList();
 
-                foreach (var pad in padsPoints)
-                {
-                    g.FillEllipse(new SolidBrush(Color.Red),
-                        pad.Item1.X - (_pcbLibRenderer.ScaleCoord(pad.Item2.X) / 2),
-                        pad.Item1.Y - (_pcbLibRenderer.ScaleCoord(pad.Item2.Y) / 2),
-                        _pcbLibRenderer.ScaleCoord(pad.Item2.X),
-                        _pcbLibRenderer.ScaleCoord(pad.Item2.Y));
+                //foreach (var pad in padsPoints)
+                //{
+                //    g.FillEllipse(new SolidBrush(Color.Red),
+                //        pad.Item1.X - (_pcbLibRenderer.ScaleCoord(pad.Item2.X) / 2),
+                //        pad.Item1.Y - (_pcbLibRenderer.ScaleCoord(pad.Item2.Y) / 2),
+                //        _pcbLibRenderer.ScaleCoord(pad.Item2.X),
+                //        _pcbLibRenderer.ScaleCoord(pad.Item2.Y));
 
-                }
+                //}
             }
             return image;
         }
@@ -476,27 +498,88 @@ namespace TracingSystem
         private int _componentY;
         private void ElementControlMouseDownHandler(object? sender, MouseEventArgs args)
         {
+            //меняем координаты выбранного компонента
             _componentX = args.X;
             _componentY = args.Y;
 
-            if (_project.SelectedElement != null)
-            {
-                _project.SelectedElement.ElementControl.Image = RenderPcbComponent(_project.SelectedElement.ElementControl.PcbComponent);
-                _project.SelectedElement.ElementControl.Invalidate();
-            }
             var elementControl = sender as ElementControl;
+            //присваеваем новый выбранный элемент
             //при открытии из бд ElementControl гарантированно создается, поэтому не null
-            _project.SelectedElement = _project.Project.Pcbs
+            var newSelectedElement = _project.Project.Pcbs
             .FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text)
             .Layers
             .SelectMany(layer => layer.Elements)
             .FirstOrDefault(element => element.ElementControl == elementControl);
 
-            using (var g = Graphics.FromImage(_project.SelectedElement.ElementControl.Image))
+            //если до этого был выбран компонент то нужно убрать у него выделение
+            if (_project.SelectedElement != null && newSelectedElement != _project.SelectedElement)
             {
-                g.DrawRectangle(new Pen(Color.Blue), new Rectangle(0, 0, elementControl.Width - 1, elementControl.Height - 1));
+                _project.SelectedElement.ElementControl.Image = RenderPcbComponent(_project.SelectedElement.ElementControl.PcbComponent);
                 _project.SelectedElement.ElementControl.Invalidate();
             }
+
+            _project.SelectedElement = newSelectedElement;
+
+            using (var g = Graphics.FromImage(_project.SelectedElement.ElementControl.Image))
+            {
+                //если нажали на pad то выделяем pad, если уже был выделен другой пад, то соединяем их
+                var pads = _project.SelectedElement.Pads;
+                foreach (var pad in pads)
+                {
+                    if (CheckIfPointInEllipse(new PointF(pad.CenterX, pad.CenterY), pad.SizeX / 2, pad.SizeY / 2, args.Location))
+                    {
+                        if (_project.SelectedPad == null)
+                        {
+                            _project.SelectedPad = pad;
+                            g.FillEllipse(new SolidBrush(Color.Red),
+                                pad.CenterX - pad.SizeX / 2,
+                                pad.CenterY - pad.SizeY / 2,
+                                pad.SizeX,
+                                pad.SizeY);
+                        }
+                        else
+                        {
+                            if (_project.SelectedPad == pad)
+                            {
+                                _project.SelectedPad = null;
+                                _project.SelectedElement.ElementControl.Image = RenderPcbComponent(_project.SelectedElement.ElementControl.PcbComponent);
+                                _project.SelectedElement = null;
+                            }
+                            else if (_project.SelectedPad.Element == pad.Element) { break; }
+                            else if (_project.SelectedPad.ConnectedPadId != Guid.Empty) { _project.SelectedPad = null; break; }
+                            else
+                            {
+                                _project.SelectedPad.ConnectedPadId = pad.Id;
+                                pad.ConnectedPadId = _project.SelectedPad.Id;
+                                _project.SelectedPad = null;
+                            }
+                        }
+                    }
+                }
+
+                //рисуем выделение выбранного элемента
+                g.DrawRectangle(new Pen(Color.Blue, 3), new Rectangle(0, 0, elementControl.Width - 1, elementControl.Height - 1));
+
+                workSpace.Invalidate();
+                elementControl.Invalidate();
+            }
+        }
+
+        public bool CheckIfPointInEllipse(PointF center, float xRadius, float yRadius, PointF location)
+        {
+            if (xRadius <= 0.0 || yRadius <= 0.0)
+                return false;
+            /* This is a more general form of the circle equation
+             *
+             * X^2/a^2 + Y^2/b^2 <= 1
+             */
+
+            PointF normalized = new PointF(location.X - center.X,
+                                         location.Y - center.Y);
+
+            return ((double)(normalized.X * normalized.X)
+                     / (xRadius * xRadius)) + ((double)(normalized.Y * normalized.Y) / (yRadius * yRadius))
+                <= 1.0;
         }
 
         private void ElementControlMouseMoveHandler(object? sender, MouseEventArgs args)
@@ -516,6 +599,8 @@ namespace TracingSystem
             var element = elementControl.Element;
             element.LocationX = elementControl.Location.X;
             element.LocationY = elementControl.Location.Y;
+
+            workSpace.Invalidate();
         }
 
         private void AddElementToProject(PcbComponent component, ElementControl elementControl)
@@ -527,19 +612,31 @@ namespace TracingSystem
                 LocationX = elementControl.Location.X,
                 LocationY = elementControl.Location.Y,
                 Image = Domain.Shared.ImageConverter.ImageToByteArray(elementControl.Image),
-                PadsCoords = new List<ElementPoint>()
+                Pads = new List<Pad>()
             };
             elementControl.Element = elementToAdd;
 
             //просто так рисуем кружки по падам
             var pads = component.Primitives.Where(primitive => primitive is PcbPad).Select(pad => pad as PcbPad);
-            var padsPoints = pads.Select(pad => Tuple.Create(_pcbLibRenderer.ScreenFromWorld(pad.Location.X, pad.Location.Y), pad.Size)).ToList();
-            foreach (var pad in padsPoints)
+            //var padsPoints = pads.Select(pad => Tuple.Create(_pcbLibRenderer.ScreenFromWorld(pad.Location.X, pad.Location.Y), pad.Size)).ToList();
+            foreach (var pad in pads)
             {
-                elementToAdd.PadsCoords.Add(new ElementPoint(
-                    pad.Item1.X - (_pcbLibRenderer.ScaleCoord(pad.Item2.X) / 2),
-                    pad.Item1.Y - (_pcbLibRenderer.ScaleCoord(pad.Item2.Y) / 2)
-                    ));
+                //elementToAdd.Pads.Add(new Pad(
+                //    pad.Item1.X - (_pcbLibRenderer.ScaleCoord(pad.Item2.X) / 2),
+                //    pad.Item1.Y - (_pcbLibRenderer.ScaleCoord(pad.Item2.Y) / 2)
+                //    ));
+                var centerPoint = _pcbLibRenderer.ScreenFromWorld(pad.Location);
+                var sizeX = _pcbLibRenderer.ScaleCoord(pad.Size.X);
+                var sizeY = _pcbLibRenderer.ScaleCoord(pad.Size.Y);
+                elementToAdd.Pads.Add(new Pad
+                {
+                    Id = Guid.NewGuid(),
+                    CenterX = centerPoint.X,
+                    CenterY = centerPoint.Y,
+                    SizeX = sizeX,
+                    SizeY = sizeY,
+                    Element = elementToAdd
+                });
             }
 
             _project?.Project?.Pcbs

@@ -21,6 +21,23 @@ namespace TracingSystem.Application.Services
 
         public event Action? SelectedElementChanged;
 
+        public event Action? SelectedPadChanged;
+
+        private Pad? selectedPad;
+        public Pad? SelectedPad
+        {
+            get
+            {
+                return selectedPad;
+            }
+            set
+            {
+                selectedPad = value;
+                if (SelectedPadChanged != null)
+                    SelectedPadChanged();
+            }
+        }
+
         private Element? selectedElement;
         public Element? SelectedElement 
         { 

@@ -2,7 +2,9 @@
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using TracingSystem.Application.Common.Abstractions;
@@ -22,14 +24,13 @@ namespace TracingSystem.Persistance
 
         public DbSet<Element> Elements { get; set; }
 
-        public DbSet<ElementPoint> ElementPoints { get; set; }
+        public DbSet<Pad> Pads { get; set; }
 
         public DbSet<TracePoint> TracePoints { get; set; }
 
         public TracingSystemDbContext(DbContextOptions<TracingSystemDbContext> options)
             : base(options)
         {
-
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -62,9 +63,18 @@ namespace TracingSystem.Persistance
                 .HasForeignKey(directionChangingCoord => directionChangingCoord.TraceId);
 
             modelBuilder.Entity<Element>()
-                .HasMany(element => element.PadsCoords)
+                .HasMany(element => element.Pads)
                 .WithOne(padsCoords => padsCoords.Element)
                 .HasForeignKey(padsCoords => padsCoords.ElementId);
+
+            //modelBuilder.Entity<Pad>()
+            //    .HasOne(pad => pad.ConnectedPad)
+            //    .WithOne(pad => pad.ThisPad)
+            //    .HasForeignKey<Pad>(pad => pad.ConnectedPadId)
+            //    .IsRequired(false)
+            //    .OnDelete(DeleteBehavior.Restrict);
+
+
         }
     }
 }

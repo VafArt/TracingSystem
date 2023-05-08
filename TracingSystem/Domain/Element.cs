@@ -24,7 +24,7 @@ namespace TracingSystem.Domain
 
         public int LocationY { get; set; }
 
-        public ICollection<ElementPoint>? PadsCoords { get; set; }
+        public ICollection<Pad>? Pads { get; set; }
 
         public byte[]? Image { get; set; }
 
