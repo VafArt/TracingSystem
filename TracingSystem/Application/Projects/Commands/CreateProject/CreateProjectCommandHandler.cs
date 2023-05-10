@@ -36,6 +36,7 @@ namespace TracingSystem.Application.Projects.Commands.CreateProject
                     new Pcb()
                     {
                         Name = request.Name + " плата",
+                        PadsConnections = new List<PadsConnection>(),
                         Layers= new List<Layer>()
                         {
                             new Layer()
@@ -46,7 +47,7 @@ namespace TracingSystem.Application.Projects.Commands.CreateProject
                             }
                         }
                     }
-                }
+                },
             };
             await _dbContext.Projects.AddAsync(project);
             await _dbContext.SaveChangesAsync(cancellationToken);

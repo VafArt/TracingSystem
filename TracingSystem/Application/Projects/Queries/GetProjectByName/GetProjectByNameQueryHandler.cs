@@ -38,6 +38,12 @@ namespace TracingSystem.Application.Projects.Queries.GetProjectByName
                 .ThenInclude(pcb => pcb.Layers)
                 .ThenInclude(layer => layer.Traces)
                 .ThenInclude(trace => trace.DirectionChangingCoords)
+                .Include(project => project.Pcbs)
+                .ThenInclude(pcb => pcb.PadsConnections)
+                .ThenInclude(connection => connection.PadFrom)
+                .Include(project => project.Pcbs)
+                .ThenInclude(pcb => pcb.PadsConnections)
+                .ThenInclude(connection => connection.PadTo)
                 .FirstOrDefaultAsync(project => project.Name == request.Name);
             if (project == null) return Result.Failure(project, DomainErrors.Project.ProjectNotFound);
             if (project.PcbLib?.Length != 0 && project.PcbLib?.Length is not null)

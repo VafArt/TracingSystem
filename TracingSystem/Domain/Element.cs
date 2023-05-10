@@ -18,8 +18,6 @@ namespace TracingSystem.Domain
 
         public string Name { get; set; }
 
-        //public ElementPoint Location { get; set; }
-
         public int LocationX { get; set; }
 
         public int LocationY { get; set; }

@@ -12,7 +12,7 @@ namespace TracingSystem.Persistance
     {
         public static void Initialize(TracingSystemDbContext dbContext)
         {
-            dbContext.Database.EnsureDeleted();
+            //dbContext.Database.EnsureDeleted();
             dbContext.Database.EnsureCreated();
 
             //var project = new Project()

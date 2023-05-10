@@ -19,6 +19,8 @@ namespace TracingSystem.Domain
 
         public int Height { get; set; }
 
+        public ICollection<PadsConnection>? PadsConnections { get; set; }
+
         public ICollection<Layer>? Layers { get; set; }
 
         public Project Project { get; set; }

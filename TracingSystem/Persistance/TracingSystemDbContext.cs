@@ -28,6 +28,8 @@ namespace TracingSystem.Persistance
 
         public DbSet<TracePoint> TracePoints { get; set; }
 
+        public DbSet<PadsConnection> PadsConnections { get; set; }
+
         public TracingSystemDbContext(DbContextOptions<TracingSystemDbContext> options)
             : base(options)
         {
@@ -66,17 +68,6 @@ namespace TracingSystem.Persistance
                 .HasMany(element => element.Pads)
                 .WithOne(padsCoords => padsCoords.Element)
                 .HasForeignKey(padsCoords => padsCoords.ElementId);
-
-            modelBuilder.Entity<Pad>()
-                .HasOne(pad => pad.ConnectedPad)
-                .WithOne()
-                .HasForeignKey<Pad>(pad => pad.ConnectedPadId)
-                .IsRequired(false)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Pad>()
-                .HasIndex(pad => pad.ConnectedPadId)
-                .IsUnique(false);
         }
     }
 }

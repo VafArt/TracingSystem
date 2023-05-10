@@ -295,12 +295,16 @@ namespace TracingSystem
                 element.ElementControl.MouseMove += ElementControlMouseMoveHandler;
                 element.ElementControl.LocationChanged += ElementControlLocationChangedHandler;
             }
+
+            workSpace.Invalidate();
         }
 
         private async void closeProjectMenu_Click(object sender, EventArgs e)
         {
             await AskToSaveProjectAsync();
             _project.ChangeProject(null, ProjectState.Startup);
+
+            workSpace.Invalidate();
         }
 
         private async void saveProjectMenu_Click(object sender, EventArgs e)
@@ -334,6 +338,8 @@ namespace TracingSystem
             var projectNames = getProjectNamesResult.IsFailure ? new List<string>() : getProjectNamesResult.Value;
             var deleteProjectForm = new DeleteProjectForm(projectNames);
             deleteProjectForm.ShowDialog();
+
+            workSpace.Invalidate();
         }
 
         private void pcbDetailsMenu_Click(object sender, EventArgs e)
@@ -378,20 +384,16 @@ namespace TracingSystem
                 }
             }
 
-            var pads = _project?.Project?.Pcbs
+            var padsConnections = _project?.Project?.Pcbs
                 ?.FirstOrDefault(pcb => toolStripChoosePcb.Text == pcb.Name)
-                ?.Layers
-                ?.SelectMany(layer => layer.Elements
-                ?.SelectMany(element => element?.Pads));
-            if (pads is null) return;
-            foreach (var firstPad in pads)
+                ?.PadsConnections;
+            if (padsConnections is null) return;
+            foreach (var padConnection in padsConnections)
             {
-                if (firstPad.ConnectedPad != null)
-                {
-                    g.DrawLine(new Pen(Color.Red, 3),
-                    new PointF(firstPad.Element.LocationX + firstPad.CenterX, firstPad.Element.LocationY + firstPad.CenterY),
-                    new PointF(firstPad.ConnectedPad.Element.LocationX + firstPad.ConnectedPad.CenterX, firstPad.ConnectedPad.Element.LocationY + firstPad.ConnectedPad.CenterY));
-                }
+                g.DrawLine(new Pen(Color.Red, 3),
+                    new PointF(padConnection.PadFrom.Element.LocationX + padConnection.PadFrom.CenterX, padConnection.PadFrom.Element.LocationY + padConnection.PadFrom.CenterY),
+                    new PointF(padConnection.PadTo.Element.LocationX + padConnection.PadTo.CenterX, padConnection.PadTo.Element.LocationY + padConnection.PadTo.CenterY)
+                    );
             }
         }
 
@@ -438,6 +440,8 @@ namespace TracingSystem
 
                 MessageBox.Show("Файл добавлен!", "Успех!");
             }
+
+            workSpace.Invalidate();
         }
 
         private async void addElementMenu_Click(object sender, EventArgs e)
@@ -518,6 +522,7 @@ namespace TracingSystem
             }
 
             _project.SelectedElement = newSelectedElement;
+            var currentPcb = _project.Project.Pcbs.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text);
 
             using (var g = Graphics.FromImage(_project.SelectedElement.ElementControl.Image))
             {
@@ -545,11 +550,15 @@ namespace TracingSystem
                                 _project.SelectedElement = null;
                             }
                             else if (_project.SelectedPad.Element == pad.Element) { break; }
-                            else if (_project.SelectedPad.ConnectedPadId != null) { _project.SelectedPad = null; break; }
+                            else if (currentPcb.PadsConnections.Select(connection => connection.PadFrom).Contains(_project.SelectedPad) || currentPcb.PadsConnections.Select(connection => connection.PadTo).Contains(_project.SelectedPad)) { _project.SelectedPad = null; break; }
                             else
                             {
-                                _project.SelectedPad.ConnectedPad = pad;
-                                pad.ConnectedPad = _project.SelectedPad;
+                                currentPcb.PadsConnections.Add(new PadsConnection
+                                {
+                                    PadFrom = _project.SelectedPad,
+                                    PadTo = pad,
+                                    Pcb = currentPcb
+                                });
                                 _project.SelectedPad = null;
                             }
                         }
@@ -733,6 +742,7 @@ namespace TracingSystem
                 foreach (var element in elements)
                     workSpace.Controls.Add(element.ElementControl);
             }
+            workSpace.Invalidate();
         }
 
         private void removeElementMenu_Click(object sender, EventArgs e)
@@ -745,7 +755,16 @@ namespace TracingSystem
                 ?.FirstOrDefault(layer => layer.Elements.Contains(_project.SelectedElement));
             layer?.Elements.Remove(_project.SelectedElement);
             workSpace.Controls.Remove(_project.SelectedElement.ElementControl);
+
+            var padConnections = _project.Project.Pcbs.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text).PadsConnections;
+            foreach(var connection in padConnections)
+            {
+                if (_project.SelectedElement.Pads.Contains(connection.PadFrom) || _project.SelectedElement.Pads.Contains(connection.PadTo))
+                    padConnections.Remove(connection);
+            }
+
             _project.SelectedElement = null;
+            workSpace.Invalidate();
         }
     }
 }
