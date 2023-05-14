@@ -543,6 +543,10 @@ namespace TracingSystem
                         }
                         else
                         {
+                            var padsFrom = currentPcb.PadsConnections.Select(connection => connection.PadFrom);
+                            var padsTo = currentPcb.PadsConnections.Select(connection => connection.PadTo);
+                            var connectionToDelete = currentPcb.PadsConnections.FirstOrDefault(padsConnection => (padsConnection.PadFrom == pad && padsConnection.PadTo == _project.SelectedPad)
+                                                                                           || (padsConnection.PadFrom == _project.SelectedPad && padsConnection.PadTo == pad));
                             if (_project.SelectedPad == pad)
                             {
                                 _project.SelectedPad = null;
@@ -550,7 +554,16 @@ namespace TracingSystem
                                 _project.SelectedElement = null;
                             }
                             else if (_project.SelectedPad.Element == pad.Element) { break; }
-                            else if (currentPcb.PadsConnections.Select(connection => connection.PadFrom).Contains(_project.SelectedPad) || currentPcb.PadsConnections.Select(connection => connection.PadTo).Contains(_project.SelectedPad)) { _project.SelectedPad = null; break; }
+                            else if (connectionToDelete is not null)
+                            {
+                                currentPcb.PadsConnections.Remove(connectionToDelete);
+                                _project.SelectedPad = null;
+                            }
+                            else if(padsFrom.Contains(pad) || padsFrom.Contains(_project.SelectedPad) || padsTo.Contains(pad) || padsTo.Contains(_project.SelectedPad))
+                            { 
+                                _project.SelectedPad = null; 
+                                break;
+                            }
                             else
                             {
                                 currentPcb.PadsConnections.Add(new PadsConnection
