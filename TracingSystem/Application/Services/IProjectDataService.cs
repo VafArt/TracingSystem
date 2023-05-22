@@ -14,6 +14,10 @@ namespace TracingSystem.Application.Services
     {
         public Project? Project { get; }
 
+        //public int PcbWidth { get; set; }
+
+        //public int PcbHeight { get; set; }
+
         public string Name { get; }
 
         public ProjectState State { get; }

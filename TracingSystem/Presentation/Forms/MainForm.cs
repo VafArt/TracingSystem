@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Windows.Forms;
 using TracingSystem.Application.Common.Abstractions;
+using TracingSystem.Application.Common.Algorithms;
 using TracingSystem.Application.Controls;
 using TracingSystem.Application.Projects.Commands.CreateProject;
 using TracingSystem.Application.Projects.Commands.SaveProject;
@@ -345,8 +346,10 @@ namespace TracingSystem
         private void pcbDetailsMenu_Click(object sender, EventArgs e)
         {
             var pcbInfoForm = new PcbInfoForm();
-            pcbInfoForm.ShowDialog();
-            _project.ChangeProject(_project.Project, ProjectState.ConfiguredData);
+            if(pcbInfoForm.ShowDialog() == DialogResult.OK)
+            {
+                _project.ChangeProject(_project.Project, ProjectState.ConfiguredData);
+            }
         }
 
         private void settingsMenu_Click(object sender, EventArgs e)
@@ -354,11 +357,6 @@ namespace TracingSystem
             var algorithmDetailsForm = new AlgorithmDetailsForm();
             algorithmDetailsForm.ShowDialog();
             _project.ChangeProject(_project.Project, ProjectState.ConfiguredAlgorithm);
-        }
-
-        private void runTraceMenu_Click(object sender, EventArgs e)
-        {
-            _project.ChangeProject(_project.Project, ProjectState.Traced);
         }
 
         private void toolStrip_LayoutCompleted(object sender, EventArgs e)
@@ -543,9 +541,9 @@ namespace TracingSystem
                         }
                         else
                         {
-                            var padsFrom = currentPcb.PadsConnections.Select(connection => connection.PadFrom);
-                            var padsTo = currentPcb.PadsConnections.Select(connection => connection.PadTo);
-                            var connectionToDelete = currentPcb.PadsConnections.FirstOrDefault(padsConnection => (padsConnection.PadFrom == pad && padsConnection.PadTo == _project.SelectedPad)
+                            var padsFrom = currentPcb?.PadsConnections?.Select(connection => connection.PadFrom);
+                            var padsTo = currentPcb?.PadsConnections?.Select(connection => connection.PadTo);
+                            var connectionToDelete = currentPcb?.PadsConnections?.FirstOrDefault(padsConnection => (padsConnection.PadFrom == pad && padsConnection.PadTo == _project.SelectedPad)
                                                                                            || (padsConnection.PadFrom == _project.SelectedPad && padsConnection.PadTo == pad));
                             if (_project.SelectedPad == pad)
                             {
@@ -699,7 +697,9 @@ namespace TracingSystem
                         Elements = new List<Element>(),
                         Traces = new List<Trace>(),
                     }
-                }
+                },
+                PadsConnections = new List<PadsConnection>()
+
             });
             _project.PerformProjectChangeAction();
         }
@@ -778,6 +778,50 @@ namespace TracingSystem
 
             _project.SelectedElement = null;
             workSpace.Invalidate();
+        }
+
+        private void runTraceMenu_Click(object sender, EventArgs e)
+        {
+            var pcbMatrix = PreparePcbMatrix();
+            var tracingAlgorithm = new Tracing(TracingOptions.MinimalDistance);
+            //var result = tracingAlgorithm.
+            //_project.ChangeProject(_project.Project, ProjectState.Traced);
+        }
+        private int[,] PreparePcbMatrix()
+        {
+            // в этом месте ширина и высота workspace должна вмещать все элементы иначе будет ошибка
+            var pcbMatrix = new int[workSpace.Width, workSpace.Height];
+            var connections = _project.Project.Pcbs.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text).PadsConnections.ToList();
+            var minus = 2;
+            for (int i = 0; i < connections.Count; i++)
+            {
+                var connection = connections[i];
+                var padFromX = connection.PadFrom.Element.LocationX + (int)Math.Round(connection.PadFrom.CenterX);
+                var padFromY = connection.PadFrom.Element.LocationY + (int)Math.Round(connection.PadFrom.CenterY);
+                var padToX = connection.PadTo.Element.LocationX + (int)Math.Round(connection.PadTo.CenterX);
+                var padToY = connection.PadTo.Element.LocationY + (int)Math.Round(connection.PadTo.CenterY);
+                pcbMatrix[padFromY, padFromX] = i - minus;
+                pcbMatrix[padToY, padToX] = i - minus;
+                minus += 2;
+            }
+            var elements = _project.Project.Pcbs.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text).Layers.SelectMany(layer => layer.Elements).ToList();
+            for (int i = 0; i < elements.Count(); i++)
+            {
+                //некорректно будет работать если элемент расположен вертикально и нормально если горизонтально, если вертикально то вместо x надо y 
+                var leftPad = (int)Math.Round(elements[i].Pads.Min(pad => pad.CenterX));
+                var rightPad = (int)Math.Round(elements[i].Pads.Max(pad => pad.CenterX));
+                var elementLocationX = elements[i].LocationX + leftPad + 2; //2 на всякий случай
+                var elementWidth = rightPad - leftPad - 2;
+                for (int j = 0; j < pcbMatrix.GetLength(0); j++)
+                {
+                    for (int k = 0; k < pcbMatrix.GetLength(1); k++)
+                    {
+                        if (k >= elementLocationX && k <= elementLocationX + elementWidth && j >= elements[i].LocationY && j <= elements[i].LocationY + elements[i].ElementControl.Height)
+                            pcbMatrix[j, k] = -1;
+                    }
+                }
+            }
+            return pcbMatrix;
         }
     }
 }

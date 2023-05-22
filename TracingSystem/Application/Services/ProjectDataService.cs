@@ -13,6 +13,11 @@ namespace TracingSystem.Application.Services
     {
         public Project? Project { get; private set; }
 
+        //public int PcbWidth { get; set; }
+
+        //public int PcbHeight { get; set; }
+
+
         public event Action? NameChanged;
 
         public event Action? StateChanged;
