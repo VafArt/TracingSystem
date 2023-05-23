@@ -39,6 +39,8 @@ namespace TracingSystem
 
         private PcbLibReader _pcbLibReader;
 
+        private int[,]? tracingResult;
+
         public MainForm()
         {
             DoubleBuffered = true;
@@ -392,6 +394,19 @@ namespace TracingSystem
                     new PointF(padConnection.PadFrom.Element.LocationX + padConnection.PadFrom.CenterX, padConnection.PadFrom.Element.LocationY + padConnection.PadFrom.CenterY),
                     new PointF(padConnection.PadTo.Element.LocationX + padConnection.PadTo.CenterX, padConnection.PadTo.Element.LocationY + padConnection.PadTo.CenterY)
                     );
+            }
+
+            if(tracingResult != null)
+            {
+                var brush = new SolidBrush(Color.Red);
+                for(int i = 0; i < tracingResult.GetLength(0); i++)
+                {
+                    for (int j = 0; j < tracingResult.GetLength(0); j++)
+                    {
+                        if (tracingResult[j,i] == -1)
+                            g.FillRectangle(brush, i, j, 1, 1);
+                    }
+                }
             }
         }
 
@@ -784,13 +799,30 @@ namespace TracingSystem
         {
             var pcbMatrix = PreparePcbMatrix();
             var tracingAlgorithm = new Tracing(TracingOptions.MinimalDistance);
-            //var result = tracingAlgorithm.
-            //_project.ChangeProject(_project.Project, ProjectState.Traced);
+            var graph = CreateGraph();
+            var result = tracingAlgorithm.FindWay(graph, pcbMatrix);
+            tracingResult = result;
+            _project.ChangeProject(_project.Project, ProjectState.Traced);
         }
+
+        private Graph CreateGraph()
+        {
+            var connections = _project.Project.Pcbs.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text).PadsConnections.ToList();
+            var graph = new Graph(connections.Count);
+            for (int i = 0; i < connections.Count; i++)
+            {
+                //x y местами поменять
+                graph[i].Coordinates.Add(new Point((int)Math.Round(connections[i].PadFrom.CenterX), (int)Math.Round(connections[i].PadFrom.CenterY)));
+                graph[i].Coordinates.Add(new Point((int)Math.Round(connections[i].PadTo.CenterX), (int)Math.Round(connections[i].PadTo.CenterY)));
+            }
+            return graph;
+        }
+
         private int[,] PreparePcbMatrix()
         {
             // в этом месте ширина и высота workspace должна вмещать все элементы иначе будет ошибка
-            var pcbMatrix = new int[workSpace.Width, workSpace.Height];
+            var pcbMatrix = new int[workSpace.Height + 1, workSpace.Width + 1];
+
             var connections = _project.Project.Pcbs.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text).PadsConnections.ToList();
             var minus = 2;
             for (int i = 0; i < connections.Count; i++)
@@ -802,6 +834,8 @@ namespace TracingSystem
                 var padToY = connection.PadTo.Element.LocationY + (int)Math.Round(connection.PadTo.CenterY);
                 pcbMatrix[padFromY, padFromX] = i - minus;
                 pcbMatrix[padToY, padToX] = i - minus;
+                var from = pcbMatrix[padFromY, padFromX];
+                var to = pcbMatrix[padToY, padToX];
                 minus += 2;
             }
             var elements = _project.Project.Pcbs.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text).Layers.SelectMany(layer => layer.Elements).ToList();
@@ -817,7 +851,7 @@ namespace TracingSystem
                     for (int k = 0; k < pcbMatrix.GetLength(1); k++)
                     {
                         if (k >= elementLocationX && k <= elementLocationX + elementWidth && j >= elements[i].LocationY && j <= elements[i].LocationY + elements[i].ElementControl.Height)
-                            pcbMatrix[j, k] = -1;
+                            pcbMatrix[k, j] = -1; // или j k
                     }
                 }
             }

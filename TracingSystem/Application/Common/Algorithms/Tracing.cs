@@ -43,10 +43,10 @@ namespace TracingSystem.Application.Common.Algorithms
             var matrix = (int[,])layer.Clone(); // создаем копию матрицы слоя
             for (int i = 0; i < graph.Nodes.Length; i++) // выполняем все что внутри для каждой вершины
             {
-                var startMatrixX = graph.Nodes[i].Coordinates.First().X / 20;
-                var startMatrixY = graph.Nodes[i].Coordinates.First().Y / 20;
-                var endMatrixX = graph.Nodes[i].Coordinates.Last().X / 20;
-                var endMatrixY = graph.Nodes[i].Coordinates.Last().Y / 20;
+                var startMatrixX = graph.Nodes[i].Coordinates.First().X;
+                var startMatrixY = graph.Nodes[i].Coordinates.First().Y;
+                var endMatrixX = graph.Nodes[i].Coordinates.Last().X;
+                var endMatrixY = graph.Nodes[i].Coordinates.Last().Y;
                 if (Options == TracingOptions.MinimalDistance)
                 {
                     matrix = (int[,])layer.Clone(); // создаем копию матрицы слоя
@@ -112,11 +112,11 @@ namespace TracingSystem.Application.Common.Algorithms
                         {
                             current.Item2--; // текущая клетка становится этой клеткой
                             result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                            graph[i].Coordinates.Insert(1, new Point(current.Item2 * 20, current.Item1 * 20)); // возможно начальные координаты будут добавляться 2 раза
+                            graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
                             if (matrixTraced[current.Item1, current.Item2] == -1) // если пересекли трассу, то соединяем вершины
                                 for (int j = 0; j < graph.Nodes.Length; j++)
                                     for (int k = 0; k < graph.Nodes[j].Coordinates.Count(); k++)
-                                        if (graph.Nodes[j].Coordinates[k].X / 20 == current.Item2 && graph.Nodes[j].Coordinates[k].Y / 20 == current.Item1)
+                                        if (graph.Nodes[j].Coordinates[k].X == current.Item2 && graph.Nodes[j].Coordinates[k].Y == current.Item1)
                                             if (i != j)
                                                 graph.Connect(i, j);
                             matrixTraced[current.Item1, current.Item2] = -1;
@@ -125,11 +125,11 @@ namespace TracingSystem.Application.Common.Algorithms
                         {
                             current.Item2++; // текущая клетка становится этой клеткой
                             result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                            graph[i].Coordinates.Insert(1, new Point(current.Item2 * 20, current.Item1 * 20)); // возможно начальные координаты будут добавляться 2 раза
+                            graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
                             if (matrixTraced[current.Item1, current.Item2] == -1) // если пересекли трассу, то соединяем вершины
                                 for (int j = 0; j < graph.Nodes.Length; j++)
                                     for (int k = 0; k < graph.Nodes[j].Coordinates.Count(); k++)
-                                        if (graph.Nodes[j].Coordinates[k].X / 20 == current.Item2 && graph.Nodes[j].Coordinates[k].Y / 20 == current.Item1)
+                                        if (graph.Nodes[j].Coordinates[k].X == current.Item2 && graph.Nodes[j].Coordinates[k].Y == current.Item1)
                                             if (i != j)
                                                 graph.Connect(i, j);
                             matrixTraced[current.Item1, current.Item2] = -1;
@@ -138,11 +138,11 @@ namespace TracingSystem.Application.Common.Algorithms
                         {
                             current.Item1--; // текущая клетка становится этой клеткой
                             result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                            graph[i].Coordinates.Insert(1, new Point(current.Item2 * 20, current.Item1 * 20)); // возможно начальные координаты будут добавляться 2 раза
+                            graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
                             if (matrixTraced[current.Item1, current.Item2] == -1) // если пересекли трассу, то соединяем вершины
                                 for (int j = 0; j < graph.Nodes.Length; j++)
                                     for (int k = 0; k < graph.Nodes[j].Coordinates.Count(); k++)
-                                        if (graph.Nodes[j].Coordinates[k].X / 20 == current.Item2 && graph.Nodes[j].Coordinates[k].Y / 20 == current.Item1)
+                                        if (graph.Nodes[j].Coordinates[k].X == current.Item2 && graph.Nodes[j].Coordinates[k].Y == current.Item1)
                                             if (i != j)
                                                 graph.Connect(i, j);
                             matrixTraced[current.Item1, current.Item2] = -1;
@@ -151,11 +151,11 @@ namespace TracingSystem.Application.Common.Algorithms
                         {
                             current.Item1++; // текущая клетка становится этой клеткой
                             result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                            graph[i].Coordinates.Insert(1, new Point(current.Item2 * 20, current.Item1 * 20)); // возможно начальные координаты будут добавляться 2 раза
+                            graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
                             if (matrixTraced[current.Item1, current.Item2] == -1) // если пересекли трассу, то соединяем вершины
                                 for (int j = 0; j < graph.Nodes.Length; j++)
                                     for (int k = 0; k < graph.Nodes[j].Coordinates.Count(); k++)
-                                        if (graph.Nodes[j].Coordinates[k].X / 20 == current.Item2 && graph.Nodes[j].Coordinates[k].Y / 20 == current.Item1)
+                                        if (graph.Nodes[j].Coordinates[k].X == current.Item2 && graph.Nodes[j].Coordinates[k].Y == current.Item1)
                                             if (i != j)
                                                 graph.Connect(i, j);
                             matrixTraced[current.Item1, current.Item2] = -1;
@@ -244,32 +244,32 @@ namespace TracingSystem.Application.Common.Algorithms
                             {
                                 current.Item2--; // текущая клетка становится этой клеткой
                                 result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                                graph[i].Coordinates.Insert(1, new Point(current.Item2 * 20, current.Item1 * 20)); // возможно начальные координаты будут добавляться 2 раза
+                                graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
                             }
                             else if (current.Item2 + 1 < matrix.GetLength(1) && (matrix[current.Item1, current.Item2 + 1] == matrix[current.Item1, current.Item2] - 1 || matrix[current.Item1, current.Item2 + 1] == matrix[startMatrixY, startMatrixX])) // если клетка справа существует и ее цифра на 1 меньше чем цифра в текущей клетке
                             {
                                 current.Item2++; // текущая клетка становится этой клеткой
                                 result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                                graph[i].Coordinates.Insert(1, new Point(current.Item2 * 20, current.Item1 * 20)); // возможно начальные координаты будут добавляться 2 раза
+                                graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
                             }
                             else if (current.Item1 - 1 >= 0 && (matrix[current.Item1 - 1, current.Item2] == matrix[current.Item1, current.Item2] - 1 || matrix[current.Item1 - 1, current.Item2] == matrix[startMatrixY, startMatrixX])) // если клетка сверху существует и ее цифра на 1 меньше чем цифра в текущей клетке
                             {
                                 current.Item1--; // текущая клетка становится этой клеткой
                                 result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                                graph[i].Coordinates.Insert(1, new Point(current.Item2 * 20, current.Item1 * 20)); // возможно начальные координаты будут добавляться 2 раза
+                                graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
                             }
                             else if (current.Item1 + 1 < matrix.GetLength(0) && (matrix[current.Item1 + 1, current.Item2] == matrix[current.Item1, current.Item2] - 1 || matrix[current.Item1 + 1, current.Item2] == matrix[startMatrixY, startMatrixX])) // если клетка снизу существует и ее цифра на 1 меньше чем цифра в текущей клетке
                             {
                                 current.Item1++; // текущая клетка становится этой клеткой
                                 result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                                graph[i].Coordinates.Insert(1, new Point(current.Item2 * 20, current.Item1 * 20)); // возможно начальные координаты будут добавляться 2 раза
+                                graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
                             }
                             if (current.Item1 == startMatrixY && current.Item2 == startMatrixX) break; // вечный цикл до тех пор пока не дойдем до начальной клетки
                         }
                         graph.Nodes[i].Coordinates.RemoveAt(0);
                         foreach (var coordinate in graph.Nodes[i].Coordinates)
                         {
-                            matrix[coordinate.Y / 20, coordinate.X / 20] = -1;
+                            matrix[coordinate.Y, coordinate.X] = -1;
                         }
 
                         for (int k = 0; k < matrix.GetLength(0); k++)
@@ -359,11 +359,11 @@ namespace TracingSystem.Application.Common.Algorithms
                             {
                                 current.Item2--; // текущая клетка становится этой клеткой
                                 result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                                graph[i].Coordinates.Insert(1, new Point(current.Item2 * 20, current.Item1 * 20)); // возможно начальные координаты будут добавляться 2 раза
+                                graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
                                 if (matrix[current.Item1, current.Item2] == -1) // если пересекли трассу, то соединяем вершины
                                     for (int j = 0; j < graph.Nodes.Length; j++)
                                         for (int k = 0; k < graph.Nodes[j].Coordinates.Count(); k++)
-                                            if (graph.Nodes[j].Coordinates[k].X / 20 == current.Item2 && graph.Nodes[j].Coordinates[k].Y / 20 == current.Item1)
+                                            if (graph.Nodes[j].Coordinates[k].X == current.Item2 && graph.Nodes[j].Coordinates[k].Y == current.Item1)
                                                 if (i != j)
                                                     graph.Connect(i, j);
                                 matrix[current.Item1, current.Item2] = -1;
@@ -372,11 +372,11 @@ namespace TracingSystem.Application.Common.Algorithms
                             {
                                 current.Item2++; // текущая клетка становится этой клеткой
                                 result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                                graph[i].Coordinates.Insert(1, new Point(current.Item2 * 20, current.Item1 * 20)); // возможно начальные координаты будут добавляться 2 раза
+                                graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
                                 if (matrix[current.Item1, current.Item2] == -1) // если пересекли трассу, то соединяем вершины
                                     for (int j = 0; j < graph.Nodes.Length; j++)
                                         for (int k = 0; k < graph.Nodes[j].Coordinates.Count(); k++)
-                                            if (graph.Nodes[j].Coordinates[k].X / 20 == current.Item2 && graph.Nodes[j].Coordinates[k].Y / 20 == current.Item1)
+                                            if (graph.Nodes[j].Coordinates[k].X == current.Item2 && graph.Nodes[j].Coordinates[k].Y == current.Item1)
                                                 if (i != j)
                                                     graph.Connect(i, j);
                                 matrix[current.Item1, current.Item2] = -1;
@@ -385,11 +385,11 @@ namespace TracingSystem.Application.Common.Algorithms
                             {
                                 current.Item1--; // текущая клетка становится этой клеткой
                                 result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                                graph[i].Coordinates.Insert(1, new Point(current.Item2 * 20, current.Item1 * 20)); // возможно начальные координаты будут добавляться 2 раза
+                                graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
                                 if (matrix[current.Item1, current.Item2] == -1) // если пересекли трассу, то соединяем вершины
                                     for (int j = 0; j < graph.Nodes.Length; j++)
                                         for (int k = 0; k < graph.Nodes[j].Coordinates.Count(); k++)
-                                            if (graph.Nodes[j].Coordinates[k].X / 20 == current.Item2 && graph.Nodes[j].Coordinates[k].Y / 20 == current.Item1)
+                                            if (graph.Nodes[j].Coordinates[k].X == current.Item2 && graph.Nodes[j].Coordinates[k].Y == current.Item1)
                                                 if (i != j)
                                                     graph.Connect(i, j);
                                 matrix[current.Item1, current.Item2] = -1;
@@ -398,11 +398,11 @@ namespace TracingSystem.Application.Common.Algorithms
                             {
                                 current.Item1++; // текущая клетка становится этой клеткой
                                 result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                                graph[i].Coordinates.Insert(1, new Point(current.Item2 * 20, current.Item1 * 20)); // возможно начальные координаты будут добавляться 2 раза
+                                graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
                                 if (matrix[current.Item1, current.Item2] == -1) // если пересекли трассу, то соединяем вершины
                                     for (int j = 0; j < graph.Nodes.Length; j++)
                                         for (int k = 0; k < graph.Nodes[j].Coordinates.Count(); k++)
-                                            if (graph.Nodes[j].Coordinates[k].X / 20 == current.Item2 && graph.Nodes[j].Coordinates[k].Y / 20 == current.Item1)
+                                            if (graph.Nodes[j].Coordinates[k].X == current.Item2 && graph.Nodes[j].Coordinates[k].Y == current.Item1)
                                                 if (i != j)
                                                     graph.Connect(i, j);
                                 matrix[current.Item1, current.Item2] = -1;
