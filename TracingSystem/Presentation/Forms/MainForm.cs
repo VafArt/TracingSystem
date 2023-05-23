@@ -808,8 +808,8 @@ namespace TracingSystem
             var tracingAlgorithm = new Tracing(TracingOptions.MinimalDistance);
             //var graph = CreateGraph();
             var graph = new Graph(1);
-            graph[0].Coordinates.Add(new Point(0, 1));
-            graph[0].Coordinates.Add(new Point(3, 2));
+            graph[0].Coordinates.Add(new Point(1, 0));
+            graph[0].Coordinates.Add(new Point(2, 3));
             var result = tracingAlgorithm.FindWay(graph, pcbMatrix);
             tracingResult = result;
             _project.ChangeProject(_project.Project, ProjectState.Traced);
