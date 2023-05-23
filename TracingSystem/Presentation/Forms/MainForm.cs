@@ -798,18 +798,18 @@ namespace TracingSystem
         private void runTraceMenu_Click(object sender, EventArgs e)
         {
             //var pcbMatrix = PreparePcbMatrix();
-            var pcbMatrix = new int[,] 
+            var pcbMatrix = new int[,]
             {
-                { -2, 0, 0, },
-                { 0, 0, 0, },
-                { 0, 0, 0, },
-                { 0, 0, -2, }
+                { -1, -2, 0, },
+                { -1, -1, 0, },
+                { -1, -1, 0, },
+                { -1, -1, -2, }
             };
             var tracingAlgorithm = new Tracing(TracingOptions.MinimalDistance);
             //var graph = CreateGraph();
             var graph = new Graph(1);
-            graph[0].Coordinates.Add(new Point(0, 0));
-            graph[0].Coordinates.Add(new Point(2, 3));
+            graph[0].Coordinates.Add(new Point(0, 1));
+            graph[0].Coordinates.Add(new Point(3, 2));
             var result = tracingAlgorithm.FindWay(graph, pcbMatrix);
             tracingResult = result;
             _project.ChangeProject(_project.Project, ProjectState.Traced);
@@ -821,9 +821,13 @@ namespace TracingSystem
             var graph = new Graph(connections.Count);
             for (int i = 0; i < connections.Count; i++)
             {
-                //x y местами поменять
-                graph[i].Coordinates.Add(new Point((int)Math.Round(connections[i].PadFrom.CenterX), (int)Math.Round(connections[i].PadFrom.CenterY)));
-                graph[i].Coordinates.Add(new Point((int)Math.Round(connections[i].PadTo.CenterX), (int)Math.Round(connections[i].PadTo.CenterY)));
+                var connection = connections[i];
+                var padFromX = connection.PadFrom.Element.LocationX + (int)Math.Round(connection.PadFrom.CenterX);
+                var padFromY = connection.PadFrom.Element.LocationY + (int)Math.Round(connection.PadFrom.CenterY);
+                var padToX = connection.PadTo.Element.LocationX + (int)Math.Round(connection.PadTo.CenterX);
+                var padToY = connection.PadTo.Element.LocationY + (int)Math.Round(connection.PadTo.CenterY);
+                graph[i].Coordinates.Add(new Point(padFromX, padFromY));
+                graph[i].Coordinates.Add(new Point(padToX, padToY));
             }
             return graph;
         }
@@ -848,23 +852,33 @@ namespace TracingSystem
                 var to = pcbMatrix[padToY, padToX];
                 minus += 2;
             }
-            //var elements = _project.Project.Pcbs.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text).Layers.SelectMany(layer => layer.Elements).ToList();
-            //for (int i = 0; i < elements.Count(); i++)
-            //{
-            //    //некорректно будет работать если элемент расположен вертикально и нормально если горизонтально, если вертикально то вместо x надо y 
-            //    var leftPad = (int)Math.Round(elements[i].Pads.Min(pad => pad.CenterX));
-            //    var rightPad = (int)Math.Round(elements[i].Pads.Max(pad => pad.CenterX));
-            //    var elementLocationX = elements[i].LocationX + leftPad + 2; //2 на всякий случай
-            //    var elementWidth = rightPad - leftPad - 2;
-            //    for (int j = 0; j < pcbMatrix.GetLength(0); j++)
-            //    {
-            //        for (int k = 0; k < pcbMatrix.GetLength(1); k++)
-            //        {
-            //            if (k >= elementLocationX && k <= elementLocationX + elementWidth && j >= elements[i].LocationY && j <= elements[i].LocationY + elements[i].ElementControl.Height)
-            //                pcbMatrix[j, k] = -1; // или j k
-            //        }
-            //    }
-            //}
+            //не работает
+            var elements = _project.Project.Pcbs.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text).Layers.SelectMany(layer => layer.Elements).ToList();
+            for (int i = 0; i < elements.Count(); i++)
+            {
+                //некорректно будет работать если элемент расположен вертикально и нормально если горизонтально, если вертикально то вместо x надо y 
+                //var leftPad = (int)Math.Round(elements[i].Pads.Min(pad => pad.CenterX));
+                //var rightPad = (int)Math.Round(elements[i].Pads.Max(pad => pad.CenterX));
+                //var elementLocationX = leftPad + 10; //2 на всякий случай
+                //var elementWidth = rightPad - leftPad - 10;
+                //for (int j = 0; j < pcbMatrix.GetLength(0); j++)
+                //{
+                //    for (int k = 0; k < pcbMatrix.GetLength(1); k++)
+                //    {
+                //        if (k >= elementLocationX && k <= elementLocationX + elementWidth && j >= elements[i].LocationY && j <= elements[i].LocationY + 50 + elements[i].ElementControl.Height - 50)
+                //            pcbMatrix[j, k] = -1; // или j k
+                //    }
+                //}
+
+                //for (int j = 0; j < pcbMatrix.GetLength(0); j++)
+                //{
+                //    for (int k = 0; k < pcbMatrix.GetLength(1); k++)
+                //    {
+                //        if (k >= elements[i].LocationX + 50 && k <= elements[i].LocationX + elements[i].ElementControl.Width - 50 && j >= elements[i].LocationY + 50 && j <= elements[i].LocationY + elements[i].ElementControl.Height - 50)
+                //            pcbMatrix[j, k] = -1;
+                //    }
+                //}
+            }
             return pcbMatrix;
         }
     }

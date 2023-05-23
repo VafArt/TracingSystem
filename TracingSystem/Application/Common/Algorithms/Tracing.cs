@@ -98,6 +98,8 @@ namespace TracingSystem.Application.Common.Algorithms
                             }
                         }
                         counter++; // увеличиваем счетчик
+                        var a = matrix[endMatrixY, endMatrixX];
+                        var b = matrix[startMatrixY, startMatrixX];
                         if (matrix[endMatrixY, endMatrixX] != matrix[startMatrixY, startMatrixX]) // вечный цикл до тех пор пока не дойдем до начальной или конечной клетки
                             break;
                     }
