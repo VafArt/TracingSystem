@@ -292,7 +292,7 @@ namespace TracingSystem
             openProjectForm.ShowDialog();
             var elements = _project?.Project?.Pcbs?.SelectMany(pcb => pcb?.Layers?.SelectMany(layer => layer?.Elements));
             if (elements == null) return;
-            foreach(var element in elements)
+            foreach (var element in elements)
             {
                 element.ElementControl.MouseDown += ElementControlMouseDownHandler;
                 element.ElementControl.MouseMove += ElementControlMouseMoveHandler;
@@ -348,7 +348,7 @@ namespace TracingSystem
         private void pcbDetailsMenu_Click(object sender, EventArgs e)
         {
             var pcbInfoForm = new PcbInfoForm();
-            if(pcbInfoForm.ShowDialog() == DialogResult.OK)
+            if (pcbInfoForm.ShowDialog() == DialogResult.OK)
             {
                 _project.ChangeProject(_project.Project, ProjectState.ConfiguredData);
             }
@@ -396,14 +396,14 @@ namespace TracingSystem
                     );
             }
 
-            if(tracingResult != null)
+            if (tracingResult != null)
             {
                 var brush = new SolidBrush(Color.Red);
-                for(int i = 0; i < tracingResult.GetLength(0); i++)
+                for (int i = 0; i < tracingResult.GetLength(0); i++)
                 {
                     for (int j = 0; j < tracingResult.GetLength(0); j++)
                     {
-                        if (tracingResult[j,i] == -1)
+                        if (tracingResult[j, i] == -1)
                             g.FillRectangle(brush, i, j, 1, 1);
                     }
                 }
@@ -572,9 +572,9 @@ namespace TracingSystem
                                 currentPcb.PadsConnections.Remove(connectionToDelete);
                                 _project.SelectedPad = null;
                             }
-                            else if(padsFrom.Contains(pad) || padsFrom.Contains(_project.SelectedPad) || padsTo.Contains(pad) || padsTo.Contains(_project.SelectedPad))
-                            { 
-                                _project.SelectedPad = null; 
+                            else if (padsFrom.Contains(pad) || padsFrom.Contains(_project.SelectedPad) || padsTo.Contains(pad) || padsTo.Contains(_project.SelectedPad))
+                            {
+                                _project.SelectedPad = null;
                                 break;
                             }
                             else
@@ -775,7 +775,7 @@ namespace TracingSystem
 
         private void removeElementMenu_Click(object sender, EventArgs e)
         {
-            if(_project.SelectedElement == null) { MessageBox.Show("Выберите элемент для удаления!", "Ошибка!"); return; }
+            if (_project.SelectedElement == null) { MessageBox.Show("Выберите элемент для удаления!", "Ошибка!"); return; }
 
             var layer = _project.Project?.Pcbs
                 ?.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text)
@@ -785,7 +785,7 @@ namespace TracingSystem
             workSpace.Controls.Remove(_project.SelectedElement.ElementControl);
 
             var padConnections = _project.Project.Pcbs.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text).PadsConnections;
-            foreach(var connection in padConnections)
+            foreach (var connection in padConnections)
             {
                 if (_project.SelectedElement.Pads.Contains(connection.PadFrom) || _project.SelectedElement.Pads.Contains(connection.PadTo))
                     padConnections.Remove(connection);
@@ -797,9 +797,19 @@ namespace TracingSystem
 
         private void runTraceMenu_Click(object sender, EventArgs e)
         {
-            var pcbMatrix = PreparePcbMatrix();
+            //var pcbMatrix = PreparePcbMatrix();
+            var pcbMatrix = new int[,] 
+            {
+                { -2, 0, 0, },
+                { 0, 0, 0, },
+                { 0, 0, 0, },
+                { 0, 0, -2, }
+            };
             var tracingAlgorithm = new Tracing(TracingOptions.MinimalDistance);
-            var graph = CreateGraph();
+            //var graph = CreateGraph();
+            var graph = new Graph(1);
+            graph[0].Coordinates.Add(new Point(0, 0));
+            graph[0].Coordinates.Add(new Point(2, 3));
             var result = tracingAlgorithm.FindWay(graph, pcbMatrix);
             tracingResult = result;
             _project.ChangeProject(_project.Project, ProjectState.Traced);
@@ -838,23 +848,23 @@ namespace TracingSystem
                 var to = pcbMatrix[padToY, padToX];
                 minus += 2;
             }
-            var elements = _project.Project.Pcbs.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text).Layers.SelectMany(layer => layer.Elements).ToList();
-            for (int i = 0; i < elements.Count(); i++)
-            {
-                //некорректно будет работать если элемент расположен вертикально и нормально если горизонтально, если вертикально то вместо x надо y 
-                var leftPad = (int)Math.Round(elements[i].Pads.Min(pad => pad.CenterX));
-                var rightPad = (int)Math.Round(elements[i].Pads.Max(pad => pad.CenterX));
-                var elementLocationX = elements[i].LocationX + leftPad + 2; //2 на всякий случай
-                var elementWidth = rightPad - leftPad - 2;
-                for (int j = 0; j < pcbMatrix.GetLength(0); j++)
-                {
-                    for (int k = 0; k < pcbMatrix.GetLength(1); k++)
-                    {
-                        if (k >= elementLocationX && k <= elementLocationX + elementWidth && j >= elements[i].LocationY && j <= elements[i].LocationY + elements[i].ElementControl.Height)
-                            pcbMatrix[k, j] = -1; // или j k
-                    }
-                }
-            }
+            //var elements = _project.Project.Pcbs.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text).Layers.SelectMany(layer => layer.Elements).ToList();
+            //for (int i = 0; i < elements.Count(); i++)
+            //{
+            //    //некорректно будет работать если элемент расположен вертикально и нормально если горизонтально, если вертикально то вместо x надо y 
+            //    var leftPad = (int)Math.Round(elements[i].Pads.Min(pad => pad.CenterX));
+            //    var rightPad = (int)Math.Round(elements[i].Pads.Max(pad => pad.CenterX));
+            //    var elementLocationX = elements[i].LocationX + leftPad + 2; //2 на всякий случай
+            //    var elementWidth = rightPad - leftPad - 2;
+            //    for (int j = 0; j < pcbMatrix.GetLength(0); j++)
+            //    {
+            //        for (int k = 0; k < pcbMatrix.GetLength(1); k++)
+            //        {
+            //            if (k >= elementLocationX && k <= elementLocationX + elementWidth && j >= elements[i].LocationY && j <= elements[i].LocationY + elements[i].ElementControl.Height)
+            //                pcbMatrix[j, k] = -1; // или j k
+            //        }
+            //    }
+            //}
             return pcbMatrix;
         }
     }
