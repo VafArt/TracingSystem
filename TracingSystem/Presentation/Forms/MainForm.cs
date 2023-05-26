@@ -371,6 +371,8 @@ namespace TracingSystem
         private void workSpace_Paint(object sender, PaintEventArgs e)
         {
             var g = e.Graphics;
+            g.DrawLine(new Pen(Color.Red, 10), new Point(400, 400), new Point(400, 450));
+            g.DrawLine(new Pen(Color.Red, 10), new Point(416, 400), new Point(416, 450));
             g.SmoothingMode = SmoothingMode.HighQuality;
             var workspace = (PictureBox)sender;
             for (decimal relX = 0; relX < workSpace.Width; relX += (Convert.ToDecimal(0.393701) * workSpace.DeviceDpi))
@@ -839,7 +841,7 @@ namespace TracingSystem
                     }
                 }
             };
-            var tracingAlgorithm = new Tracing(ObjectiveFunction.MinimalLayerCount, TracePriority.Vertical);
+            var tracingAlgorithm = new Tracing(ObjectiveFunction.MinimalLayerCount, TracePriority.Horizontal);
             var currentPcb = _project?.Project?.Pcbs?.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text);
             var traces = await tracingAlgorithm.RunAsync(pcbMatrix, /*padsConnections*/ currentPcb?.PadsConnections);
             currentPcb.Layers.First().Traces = traces.ToList();
