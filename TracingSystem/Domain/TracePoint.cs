@@ -12,5 +12,11 @@ namespace TracingSystem.Domain
         public int TraceId { get; set; }
 
         public Trace Trace { get; set; }
+
+        public TracePoint(float x, float y)
+            :base(x, y)
+        {
+
+        }
     }
 }

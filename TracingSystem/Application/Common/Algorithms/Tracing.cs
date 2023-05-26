@@ -1,422 +1,374 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TracingSystem.Domain;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
 
 namespace TracingSystem.Application.Common.Algorithms
 {
-    public enum TracingOptions
+    public enum ObjectiveFunction
     {
         MinimalDistance,
         MinimalLayerCount,
     }
+
+    public enum PcbMatrixPart
+    {
+        FreePlace = 0, // свободное место на плате
+        TracePart = -1, // часть трассы
+        ElementPart = -2 // часть элемента
+            // <= -3 - начало и конец трассы
+            // > 0 - волна
+    }
+
+    public enum TracePriority
+    {
+        Vertical,
+        Horizontal,
+    }
+
     public class Tracing
     {
-        //public int[,] Layer { get; set; }
+        //if (startMatrixY - 1 >= 0 && ((matrix[startMatrixY - 1, startMatrixX] > -2) || (matrix[startMatrixY - 1, startMatrixX] == matrix[startMatrixY, startMatrixX]))) // если клетка сверху от начальной клетки существует и равна 0 или значению в начальной клетке
 
-        public TracingOptions Options { get; set; }
-
-        public Tracing(TracingOptions options)
+        private class Position
         {
-            Options = options;
+            public int Row { get; set; }
+
+            public int Column { get; set; }
+
+            public Position(int row, int column)
+            {
+                Row = row;
+                Column = column;
+            }
         }
 
-        public int[,] FindWay(Graph graph, int[,] layer)
+        private static bool CheckIfPositionExists(int[,] matrix, int row, int column)
         {
-            var result = new List<List<Tuple<int, int>>>(); // все маршруты
+            if (row >= matrix.GetLength(0) || row < 0) return false;
 
-            var distances = new List<Tuple<double, List<Point>>>();
-            var matrixTraced = (int[,])layer.Clone(); // создаем копию матрицы слоя с проведенными трассами
-            for (int i = 0; i < graph.Nodes.Length; i++)
+            if (column >= matrix.GetLength(1) || column < 0) return false;
+
+            return true;
+        }
+
+        private static bool CheckIfCorrectPosition(int[,] matrix, int row, int column, int neighborRow, int neighborColumn)
+        {
+            if (matrix == null) return false;
+
+            if(!CheckIfPositionExists(matrix, row, column)) return false;
+
+            if (!CheckIfPositionExists(matrix, neighborRow, neighborColumn)) return false;
+
+            if (!(row == neighborRow && (Math.Abs(column - neighborColumn) == 1) || (column == neighborColumn && (Math.Abs(row - neighborRow) == 1)))) return false; // если это не соседние клетки, не считая диагональных
+
+            if (matrix[neighborRow, neighborColumn] > 0) return false;
+
+            if (matrix[row, column] == 1 && matrix[neighborRow, neighborColumn] < -2) return false; //чтобы не изменить начальную позицию
+
+            return true;
+        }
+
+        private static readonly Func<int[,], int, int, int, int, int, bool> MinimalDistanceComparer = (matrix, row, column, neighborRow, neighborColumn, startValue) =>
+        {
+            if (!CheckIfCorrectPosition(matrix, row, column, neighborRow, neighborColumn)) return false;
+
+            if (matrix[neighborRow, neighborColumn] == (int)PcbMatrixPart.ElementPart) return false;
+            return true;
+        };
+
+        private static readonly Func<int[,], int, int, int, int, int, bool> MinimalLayerCountComparer = (matrix, row, column, neighborRow, neighborColumn, startValue) =>
+        {
+            if (!CheckIfCorrectPosition(matrix, row, column, neighborRow, neighborColumn)) return false;
+
+            if (matrix[neighborRow, neighborColumn] == (int)PcbMatrixPart.ElementPart) return false;
+
+            if (matrix[neighborRow, neighborColumn] == (int)PcbMatrixPart.TracePart) return false;
+
+            if (matrix[neighborRow, neighborColumn] <= -3 && matrix[neighborRow, neighborColumn] != startValue) return false; // начало или конец трассы
+
+            return true;
+        };
+
+        public ObjectiveFunction ObjectiveFunction { get; set; }
+
+        public TracePriority Priority { get; set; }
+
+        public Tracing(ObjectiveFunction objectiveFunction, TracePriority priority)
+        {
+            ObjectiveFunction = objectiveFunction;
+            Priority = priority;
+        }
+
+        public async Task<IEnumerable<Trace>> RunAsync(int[,] matrix, IEnumerable<PadsConnection> connections)
+        {
+            var result = new Trace[connections.Count()];
+
+            // отсортировать в порядке увеличения расстояния между падами
+            var orderedConnections = connections.OrderBy(connection => Math.Sqrt(Math.Pow(connection.PadTo.CenterX - connection.PadFrom.CenterX, 2) + Math.Pow(connection.PadTo.CenterY - connection.PadFrom.CenterY, 2))).ToList();
+
+            var clonedMatrix = (int[,])matrix.Clone();
+            if(ObjectiveFunction == ObjectiveFunction.MinimalLayerCount)
             {
-                var distance = Math.Sqrt(Math.Pow(graph.Nodes[i].Coordinates.First().X - graph.Nodes[i].Coordinates.Last().X, 2) + Math.Pow(graph.Nodes[i].Coordinates.First().Y - graph.Nodes[i].Coordinates.Last().Y, 2));
-                distances.Add(new Tuple<double, List<Point>>(distance, graph.Nodes[i].Coordinates));
-            }
-
-            distances = distances.OrderByDescending((distances) => distances.Item1).ToList();
-
-            //for (int i = 0; i < graph.Nodes.Length; i++)
-            //    graph[i].Coordinates = distances[i].Item2;
-
-            var matrix = (int[,])layer.Clone(); // создаем копию матрицы слоя
-            for (int i = 0; i < graph.Nodes.Length; i++) // выполняем все что внутри для каждой вершины
-            {
-                var startMatrixX = graph.Nodes[i].Coordinates.First().X;
-                var startMatrixY = graph.Nodes[i].Coordinates.First().Y;
-                var endMatrixX = graph.Nodes[i].Coordinates.Last().X;
-                var endMatrixY = graph.Nodes[i].Coordinates.Last().Y;
-                if (Options == TracingOptions.MinimalDistance)
+                var comparer = MinimalLayerCountComparer;
+                for (int i = 0; i < orderedConnections.Count; i++)
                 {
-                    matrix = (int[,])layer.Clone(); // создаем копию матрицы слоя
-                    if (startMatrixY - 1 >= 0 && (matrix[startMatrixY - 1, startMatrixX] > -2 || matrix[startMatrixY - 1, startMatrixX] == matrix[startMatrixY, startMatrixX])) // если клетка сверху от начальной клетки существует и равна 0 или значению в начальной клетке
-                    {
-                        matrix[startMatrixY - 1, startMatrixX] = 1; // присваеимваем этой клетки единицу
-
-                    }
-                    if (startMatrixY + 1 < matrix.GetLength(1) && (matrix[startMatrixY + 1, startMatrixX] > -2 || matrix[startMatrixY + 1, startMatrixX] == matrix[startMatrixY, startMatrixX])) // если клетка снизу от начальной клетки существует и равна 0 или значению в начальной клетке
-                    {
-                        matrix[startMatrixY + 1, startMatrixX] = 1; // присваеимваем этой клетки единицу
-                    }
-                    if (startMatrixX - 1 >= 0 && (matrix[startMatrixY, startMatrixX - 1] > -2 || matrix[startMatrixY, startMatrixX - 1] == matrix[startMatrixY, startMatrixX])) // если клетка слева от начальной клетки существует и равна 0 или значению в начальной клетке
-                    {
-                        matrix[startMatrixY, startMatrixX - 1] = 1; // присваеимваем этой клетки единицу
-                    }
-                    if (startMatrixX + 1 < matrix.GetLength(0) && (matrix[startMatrixY, startMatrixX + 1] > -2 || matrix[startMatrixY, startMatrixX + 1] == matrix[startMatrixY, startMatrixX])) // если клетка справа от начальной клетки существует и равна 0 или значению в начальной клетке
-                    {
-                        matrix[startMatrixY, startMatrixX + 1] = 1; // присваеимваем этой клетки единицу
-                    }
-
-                    int counter = 1; // счетчик
-                    while (true)
-                    {
-                        for (int k = 0; k < matrix.GetLength(0); k++) // проходимся по матрице
-                        {
-                            for (int j = 0; j < matrix.GetLength(1); j++)
-                            {
-                                if (matrix[k, j] == counter) // ищем клетки которые равны счетчику (первоначально единице)
-                                {
-                                    if (k - 1 >= 0 && (matrix[k - 1, j] == 0 || k - 1 == endMatrixY && j == endMatrixX)) // если клетка сверху от этой клетки существует и равна 0 или -3 (не стена)
-                                    {
-                                        matrix[k - 1, j] = counter + 1; // присваиваем ей счетчик + 1
-                                    }
-                                    if (k + 1 < matrix.GetLength(0) && (matrix[k + 1, j] == 0 || k + 1 == endMatrixY && j == endMatrixX)) // если клетка снизу от этой клетки существует и равна 0 или -3 (не стена)
-                                    {
-                                        matrix[k + 1, j] = counter + 1; // присваиваем ей счетчик + 1
-                                    }
-                                    if (j - 1 >= 0 && (matrix[k, j - 1] == 0 || k == endMatrixY && j - 1 == endMatrixX)) // если клетка слева от этой клетки существует и равна 0 или -3 (не стена)
-                                    {
-                                        matrix[k, j - 1] = counter + 1; // присваиваем ей счетчик + 1
-                                    }
-                                    if (j + 1 < matrix.GetLength(1) && (matrix[k, j + 1] == 0 || k == endMatrixY && j + 1 == endMatrixX)) // если клетка справа от этой клетки существует и равна 0 или -3 (не стена)
-                                    {
-                                        matrix[k, j + 1] = counter + 1; // присваиваем ей счетчик + 1
-                                    }
-
-                                }
-                            }
-                        }
-                        counter++; // увеличиваем счетчик
-                        var a = matrix[endMatrixY, endMatrixX];
-                        var b = matrix[startMatrixY, startMatrixX];
-                        if (matrix[endMatrixY, endMatrixX] != matrix[startMatrixY, startMatrixX]) // вечный цикл до тех пор пока не дойдем до начальной или конечной клетки
-                            break;
-                    }
-
-                    var current = (endMatrixY, endMatrixX); // в текущую клетку записываем клетку конца
-                    result.Add(new List<Tuple<int, int>>()); // создаем лист куда будем записывать маршрут
-                    result[i].Add(new Tuple<int, int>(endMatrixY, endMatrixX));
-                    matrixTraced[endMatrixY, endMatrixX] = -1;
-                    while (true) // опять вечный цикл
-                    {
-                        if (current.Item2 - 1 >= 0 && (matrix[current.Item1, current.Item2 - 1] == matrix[current.Item1, current.Item2] - 1 || matrix[current.Item1, current.Item2 - 1] == matrix[startMatrixY, startMatrixX])) // если клетка слева существует и ее цифра на 1 меньше чем цифра в текущей клетке
-                        {
-                            current.Item2--; // текущая клетка становится этой клеткой
-                            result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                            graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
-                            if (matrixTraced[current.Item1, current.Item2] == -1) // если пересекли трассу, то соединяем вершины
-                                for (int j = 0; j < graph.Nodes.Length; j++)
-                                    for (int k = 0; k < graph.Nodes[j].Coordinates.Count(); k++)
-                                        if (graph.Nodes[j].Coordinates[k].X == current.Item2 && graph.Nodes[j].Coordinates[k].Y == current.Item1)
-                                            if (i != j)
-                                                graph.Connect(i, j);
-                            matrixTraced[current.Item1, current.Item2] = -1;
-                        }
-                        else if (current.Item2 + 1 < matrix.GetLength(1) && (matrix[current.Item1, current.Item2 + 1] == matrix[current.Item1, current.Item2] - 1 || matrix[current.Item1, current.Item2 + 1] == matrix[startMatrixY, startMatrixX])) // если клетка справа существует и ее цифра на 1 меньше чем цифра в текущей клетке
-                        {
-                            current.Item2++; // текущая клетка становится этой клеткой
-                            result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                            graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
-                            if (matrixTraced[current.Item1, current.Item2] == -1) // если пересекли трассу, то соединяем вершины
-                                for (int j = 0; j < graph.Nodes.Length; j++)
-                                    for (int k = 0; k < graph.Nodes[j].Coordinates.Count(); k++)
-                                        if (graph.Nodes[j].Coordinates[k].X == current.Item2 && graph.Nodes[j].Coordinates[k].Y == current.Item1)
-                                            if (i != j)
-                                                graph.Connect(i, j);
-                            matrixTraced[current.Item1, current.Item2] = -1;
-                        }
-                        else if (current.Item1 - 1 >= 0 && (matrix[current.Item1 - 1, current.Item2] == matrix[current.Item1, current.Item2] - 1 || matrix[current.Item1 - 1, current.Item2] == matrix[startMatrixY, startMatrixX])) // если клетка сверху существует и ее цифра на 1 меньше чем цифра в текущей клетке
-                        {
-                            current.Item1--; // текущая клетка становится этой клеткой
-                            result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                            graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
-                            if (matrixTraced[current.Item1, current.Item2] == -1) // если пересекли трассу, то соединяем вершины
-                                for (int j = 0; j < graph.Nodes.Length; j++)
-                                    for (int k = 0; k < graph.Nodes[j].Coordinates.Count(); k++)
-                                        if (graph.Nodes[j].Coordinates[k].X == current.Item2 && graph.Nodes[j].Coordinates[k].Y == current.Item1)
-                                            if (i != j)
-                                                graph.Connect(i, j);
-                            matrixTraced[current.Item1, current.Item2] = -1;
-                        }
-                        else if (current.Item1 + 1 < matrix.GetLength(0) && (matrix[current.Item1 + 1, current.Item2] == matrix[current.Item1, current.Item2] - 1 || matrix[current.Item1 + 1, current.Item2] == matrix[startMatrixY, startMatrixX])) // если клетка снизу существует и ее цифра на 1 меньше чем цифра в текущей клетке
-                        {
-                            current.Item1++; // текущая клетка становится этой клеткой
-                            result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                            graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
-                            if (matrixTraced[current.Item1, current.Item2] == -1) // если пересекли трассу, то соединяем вершины
-                                for (int j = 0; j < graph.Nodes.Length; j++)
-                                    for (int k = 0; k < graph.Nodes[j].Coordinates.Count(); k++)
-                                        if (graph.Nodes[j].Coordinates[k].X == current.Item2 && graph.Nodes[j].Coordinates[k].Y == current.Item1)
-                                            if (i != j)
-                                                graph.Connect(i, j);
-                            matrixTraced[current.Item1, current.Item2] = -1;
-                        }
-                        if (current.Item1 == startMatrixY && current.Item2 == startMatrixX) break; // вечный цикл до тех пор пока не дойдем до начальной клетки
-                    }
-                    graph.Nodes[i].Coordinates.RemoveAt(0);
-                    matrix[endMatrixY, endMatrixX] = matrix[startMatrixY, startMatrixX];
-                }
-
-                if (Options == TracingOptions.MinimalLayerCount)
-                {
-                    //может получится что вокруг трассы -1
-                    if (startMatrixY - 1 >= 0 && (matrix[startMatrixY - 1, startMatrixX] == 0 || matrix[startMatrixY - 1, startMatrixX] == matrix[startMatrixY, startMatrixX])) // если клетка сверху от начальной клетки существует и равна 0 или значению в начальной клетке
-                    {
-                        matrix[startMatrixY - 1, startMatrixX] = 1; // присваеимваем этой клетки единицу
-                    }
-                    if (startMatrixY + 1 < matrix.GetLength(1) && (matrix[startMatrixY + 1, startMatrixX] == 0 || matrix[startMatrixY + 1, startMatrixX] == matrix[startMatrixY, startMatrixX])) // если клетка снизу от начальной клетки существует и равна 0 или значению в начальной клетке
-                    {
-                        matrix[startMatrixY + 1, startMatrixX] = 1; // присваеимваем этой клетки единицу
-                    }
-                    if (startMatrixX - 1 >= 0 && (matrix[startMatrixY, startMatrixX - 1] == 0 || matrix[startMatrixY, startMatrixX - 1] == matrix[startMatrixY, startMatrixX])) // если клетка слева от начальной клетки существует и равна 0 или значению в начальной клетке
-                    {
-                        matrix[startMatrixY, startMatrixX - 1] = 1; // присваеимваем этой клетки единицу
-                    }
-                    if (startMatrixX + 1 < matrix.GetLength(0) && (matrix[startMatrixY, startMatrixX + 1] == 0 || matrix[startMatrixY, startMatrixX + 1] == matrix[startMatrixY, startMatrixX])) // если клетка справа от начальной клетки существует и равна 0 или значению в начальной клетке
-                    {
-                        matrix[startMatrixY, startMatrixX + 1] = 1; // присваеимваем этой клетки единицу
-                    }
-
-                    int counter = 1; // счетчик
-                    var oldMatrix = (int[,])matrix.Clone();
-                    while (true)
-                    {
-                        for (int k = 0; k < matrix.GetLength(0); k++)
-                        {
-                            for (int j = 0; j < matrix.GetLength(1); j++)
-                            {
-                                oldMatrix[k, j] = matrix[k, j];
-                            }
-                        }
-
-                        for (int k = 0; k < matrix.GetLength(0); k++) // проходимся по матрице
-                        {
-                            for (int j = 0; j < matrix.GetLength(1); j++)
-                            {
-                                if (matrix[k, j] == counter) // ищем клетки которые равны счетчику (первоначально единице)
-                                {
-                                    if (k - 1 >= 0 && (matrix[k - 1, j] == 0 || k - 1 == endMatrixY && j == endMatrixX)) // если клетка сверху от этой клетки существует и равна 0 или -3 (не стена)
-                                    {
-                                        matrix[k - 1, j] = counter + 1; // присваиваем ей счетчик + 1
-                                    }
-                                    if (k + 1 < matrix.GetLength(0) && (matrix[k + 1, j] == 0 || k + 1 == endMatrixY && j == endMatrixX)) // если клетка снизу от этой клетки существует и равна 0 или -3 (не стена)
-                                    {
-                                        matrix[k + 1, j] = counter + 1; // присваиваем ей счетчик + 1
-                                    }
-                                    if (j - 1 >= 0 && (matrix[k, j - 1] == 0 || k == endMatrixY && j - 1 == endMatrixX)) // если клетка слева от этой клетки существует и равна 0 или -3 (не стена)
-                                    {
-                                        matrix[k, j - 1] = counter + 1; // присваиваем ей счетчик + 1
-                                    }
-                                    if (j + 1 < matrix.GetLength(1) && (matrix[k, j + 1] == 0 || k == endMatrixY && j + 1 == endMatrixX)) // если клетка справа от этой клетки существует и равна 0 или -3 (не стена)
-                                    {
-                                        matrix[k, j + 1] = counter + 1; // присваиваем ей счетчик + 1
-                                    }
-
-                                }
-                            }
-                        }
-                        counter++; // увеличиваем счетчик
-
-                        if (matrix[endMatrixY, endMatrixX] != matrix[startMatrixY, startMatrixX]) // вечный цикл до тех пор пока не дойдем до начальной или конечной клетки
-                            break;
-
-                        if (ArrayEquality(oldMatrix, matrix)) // вечный цикл до тех пор пока не дойдем до начальной или конечной клетки
-                            break;
-                    }
-
-                    if (matrix[endMatrixY, endMatrixX] != matrix[startMatrixY, startMatrixX])
-                    {
-                        var current = (endMatrixY, endMatrixX); // в текущую клетку записываем клетку конца
-                        result.Add(new List<Tuple<int, int>>()); // создаем лист куда будем записывать маршрут
-                        result[i].Add(new Tuple<int, int>(endMatrixY, endMatrixX));
-                        while (true) // опять вечный цикл
-                        {
-                            if (current.Item2 - 1 >= 0 && (matrix[current.Item1, current.Item2 - 1] == matrix[current.Item1, current.Item2] - 1 || matrix[current.Item1, current.Item2 - 1] == matrix[startMatrixY, startMatrixX])) // если клетка слева существует и ее цифра на 1 меньше чем цифра в текущей клетке
-                            {
-                                current.Item2--; // текущая клетка становится этой клеткой
-                                result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                                graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
-                            }
-                            else if (current.Item2 + 1 < matrix.GetLength(1) && (matrix[current.Item1, current.Item2 + 1] == matrix[current.Item1, current.Item2] - 1 || matrix[current.Item1, current.Item2 + 1] == matrix[startMatrixY, startMatrixX])) // если клетка справа существует и ее цифра на 1 меньше чем цифра в текущей клетке
-                            {
-                                current.Item2++; // текущая клетка становится этой клеткой
-                                result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                                graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
-                            }
-                            else if (current.Item1 - 1 >= 0 && (matrix[current.Item1 - 1, current.Item2] == matrix[current.Item1, current.Item2] - 1 || matrix[current.Item1 - 1, current.Item2] == matrix[startMatrixY, startMatrixX])) // если клетка сверху существует и ее цифра на 1 меньше чем цифра в текущей клетке
-                            {
-                                current.Item1--; // текущая клетка становится этой клеткой
-                                result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                                graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
-                            }
-                            else if (current.Item1 + 1 < matrix.GetLength(0) && (matrix[current.Item1 + 1, current.Item2] == matrix[current.Item1, current.Item2] - 1 || matrix[current.Item1 + 1, current.Item2] == matrix[startMatrixY, startMatrixX])) // если клетка снизу существует и ее цифра на 1 меньше чем цифра в текущей клетке
-                            {
-                                current.Item1++; // текущая клетка становится этой клеткой
-                                result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                                graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
-                            }
-                            if (current.Item1 == startMatrixY && current.Item2 == startMatrixX) break; // вечный цикл до тех пор пока не дойдем до начальной клетки
-                        }
-                        graph.Nodes[i].Coordinates.RemoveAt(0);
-                        foreach (var coordinate in graph.Nodes[i].Coordinates)
-                        {
-                            matrix[coordinate.Y, coordinate.X] = -1;
-                        }
-
-                        for (int k = 0; k < matrix.GetLength(0); k++)
-                        {
-                            for (int j = 0; j < matrix.GetLength(1); j++)
-                            {
-                                if (matrix[k, j] > 0) matrix[k, j] = 0;
-                            }
-                        }
-                        matrix[endMatrixY, endMatrixX] = matrix[startMatrixY, startMatrixX];
-                        matrixTraced = matrix;
-                    }
-                    else
-                    {
-                        for (int j = 0; j < matrix.GetLength(0); j++)
-                        {
-                            for (int k = 0; k < matrix.GetLength(1); k++)
-                            {
-                                if (matrix[j, k] > 0) matrix[j, k] = 0;
-                                if (layer[j, k] < 0) matrix[j, k] = layer[j, k];
-                            }
-                        }
-
-                        //как в первом методе только теперь вместо matrixTraced будет matrix а вместо matrix надо создать чистую матрицу
-                        var cleanMatrix = (int[,])layer.Clone();
-
-
-                        if (startMatrixY - 1 >= 0 && (cleanMatrix[startMatrixY - 1, startMatrixX] > -2 || cleanMatrix[startMatrixY - 1, startMatrixX] == cleanMatrix[startMatrixY, startMatrixX])) // если клетка сверху от начальной клетки существует и равна 0 или значению в начальной клетке
-                        {
-                            cleanMatrix[startMatrixY - 1, startMatrixX] = 1; // присваеимваем этой клетки единицу
-
-                        }
-                        if (startMatrixY + 1 < cleanMatrix.GetLength(1) && (cleanMatrix[startMatrixY + 1, startMatrixX] > -2 || cleanMatrix[startMatrixY + 1, startMatrixX] == cleanMatrix[startMatrixY, startMatrixX])) // если клетка снизу от начальной клетки существует и равна 0 или значению в начальной клетке
-                        {
-                            cleanMatrix[startMatrixY + 1, startMatrixX] = 1; // присваеимваем этой клетки единицу
-                        }
-                        if (startMatrixX - 1 >= 0 && (cleanMatrix[startMatrixY, startMatrixX - 1] > -2 || cleanMatrix[startMatrixY, startMatrixX - 1] == cleanMatrix[startMatrixY, startMatrixX])) // если клетка слева от начальной клетки существует и равна 0 или значению в начальной клетке
-                        {
-                            cleanMatrix[startMatrixY, startMatrixX - 1] = 1; // присваеимваем этой клетки единицу
-                        }
-                        if (startMatrixX + 1 < cleanMatrix.GetLength(0) && (cleanMatrix[startMatrixY, startMatrixX + 1] > -2 || cleanMatrix[startMatrixY, startMatrixX + 1] == cleanMatrix[startMatrixY, startMatrixX])) // если клетка справа от начальной клетки существует и равна 0 или значению в начальной клетке
-                        {
-                            cleanMatrix[startMatrixY, startMatrixX + 1] = 1; // присваеимваем этой клетки единицу
-                        }
-
-                        counter = 1; // счетчик
-                        while (true)
-                        {
-                            for (int k = 0; k < cleanMatrix.GetLength(0); k++) // проходимся по матрице
-                            {
-                                for (int j = 0; j < cleanMatrix.GetLength(1); j++)
-                                {
-                                    if (cleanMatrix[k, j] == counter) // ищем клетки которые равны счетчику (первоначально единице)
-                                    {
-                                        if (k - 1 >= 0 && (cleanMatrix[k - 1, j] == 0 || k - 1 == endMatrixY && j == endMatrixX)) // если клетка сверху от этой клетки существует и равна 0 или -3 (не стена)
-                                        {
-                                            cleanMatrix[k - 1, j] = counter + 1; // присваиваем ей счетчик + 1
-                                        }
-                                        if (k + 1 < cleanMatrix.GetLength(0) && (cleanMatrix[k + 1, j] == 0 || k + 1 == endMatrixY && j == endMatrixX)) // если клетка снизу от этой клетки существует и равна 0 или -3 (не стена)
-                                        {
-                                            cleanMatrix[k + 1, j] = counter + 1; // присваиваем ей счетчик + 1
-                                        }
-                                        if (j - 1 >= 0 && (cleanMatrix[k, j - 1] == 0 || k == endMatrixY && j - 1 == endMatrixX)) // если клетка слева от этой клетки существует и равна 0 или -3 (не стена)
-                                        {
-                                            cleanMatrix[k, j - 1] = counter + 1; // присваиваем ей счетчик + 1
-                                        }
-                                        if (j + 1 < cleanMatrix.GetLength(1) && (cleanMatrix[k, j + 1] == 0 || k == endMatrixY && j + 1 == endMatrixX)) // если клетка справа от этой клетки существует и равна 0 или -3 (не стена)
-                                        {
-                                            cleanMatrix[k, j + 1] = counter + 1; // присваиваем ей счетчик + 1
-                                        }
-
-                                    }
-                                }
-                            }
-                            counter++; // увеличиваем счетчик
-                            if (cleanMatrix[endMatrixY, endMatrixX] != cleanMatrix[startMatrixY, startMatrixX]) // вечный цикл до тех пор пока не дойдем до начальной или конечной клетки
-                                break;
-                        }
-
-                        var current = (endMatrixY, endMatrixX); // в текущую клетку записываем клетку конца
-                        result.Add(new List<Tuple<int, int>>()); // создаем лист куда будем записывать маршрут
-                        result[i].Add(new Tuple<int, int>(endMatrixY, endMatrixX));
-                        //matrixTraced[endMatrixY, endMatrixX] = -1;
-                        while (true) // опять вечный цикл
-                        {
-                            if (current.Item2 - 1 >= 0 && (cleanMatrix[current.Item1, current.Item2 - 1] == cleanMatrix[current.Item1, current.Item2] - 1 || cleanMatrix[current.Item1, current.Item2 - 1] == cleanMatrix[startMatrixY, startMatrixX])) // если клетка слева существует и ее цифра на 1 меньше чем цифра в текущей клетке
-                            {
-                                current.Item2--; // текущая клетка становится этой клеткой
-                                result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                                graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
-                                if (matrix[current.Item1, current.Item2] == -1) // если пересекли трассу, то соединяем вершины
-                                    for (int j = 0; j < graph.Nodes.Length; j++)
-                                        for (int k = 0; k < graph.Nodes[j].Coordinates.Count(); k++)
-                                            if (graph.Nodes[j].Coordinates[k].X == current.Item2 && graph.Nodes[j].Coordinates[k].Y == current.Item1)
-                                                if (i != j)
-                                                    graph.Connect(i, j);
-                                matrix[current.Item1, current.Item2] = -1;
-                            }
-                            else if (current.Item2 + 1 < cleanMatrix.GetLength(1) && (cleanMatrix[current.Item1, current.Item2 + 1] == cleanMatrix[current.Item1, current.Item2] - 1 || cleanMatrix[current.Item1, current.Item2 + 1] == cleanMatrix[startMatrixY, startMatrixX])) // если клетка справа существует и ее цифра на 1 меньше чем цифра в текущей клетке
-                            {
-                                current.Item2++; // текущая клетка становится этой клеткой
-                                result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                                graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
-                                if (matrix[current.Item1, current.Item2] == -1) // если пересекли трассу, то соединяем вершины
-                                    for (int j = 0; j < graph.Nodes.Length; j++)
-                                        for (int k = 0; k < graph.Nodes[j].Coordinates.Count(); k++)
-                                            if (graph.Nodes[j].Coordinates[k].X == current.Item2 && graph.Nodes[j].Coordinates[k].Y == current.Item1)
-                                                if (i != j)
-                                                    graph.Connect(i, j);
-                                matrix[current.Item1, current.Item2] = -1;
-                            }
-                            else if (current.Item1 - 1 >= 0 && (cleanMatrix[current.Item1 - 1, current.Item2] == cleanMatrix[current.Item1, current.Item2] - 1 || cleanMatrix[current.Item1 - 1, current.Item2] == cleanMatrix[startMatrixY, startMatrixX])) // если клетка сверху существует и ее цифра на 1 меньше чем цифра в текущей клетке
-                            {
-                                current.Item1--; // текущая клетка становится этой клеткой
-                                result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                                graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
-                                if (matrix[current.Item1, current.Item2] == -1) // если пересекли трассу, то соединяем вершины
-                                    for (int j = 0; j < graph.Nodes.Length; j++)
-                                        for (int k = 0; k < graph.Nodes[j].Coordinates.Count(); k++)
-                                            if (graph.Nodes[j].Coordinates[k].X == current.Item2 && graph.Nodes[j].Coordinates[k].Y == current.Item1)
-                                                if (i != j)
-                                                    graph.Connect(i, j);
-                                matrix[current.Item1, current.Item2] = -1;
-                            }
-                            else if (current.Item1 + 1 < cleanMatrix.GetLength(0) && (cleanMatrix[current.Item1 + 1, current.Item2] == cleanMatrix[current.Item1, current.Item2] - 1 || cleanMatrix[current.Item1 + 1, current.Item2] == cleanMatrix[startMatrixY, startMatrixX])) // если клетка снизу существует и ее цифра на 1 меньше чем цифра в текущей клетке
-                            {
-                                current.Item1++; // текущая клетка становится этой клеткой
-                                result[i].Add(new Tuple<int, int>(current.Item1, current.Item2)); // добавляем текущую клетку в наш список решений
-                                graph[i].Coordinates.Insert(1, new Point(current.Item2, current.Item1)); // возможно начальные координаты будут добавляться 2 раза
-                                if (matrix[current.Item1, current.Item2] == -1) // если пересекли трассу, то соединяем вершины
-                                    for (int j = 0; j < graph.Nodes.Length; j++)
-                                        for (int k = 0; k < graph.Nodes[j].Coordinates.Count(); k++)
-                                            if (graph.Nodes[j].Coordinates[k].X == current.Item2 && graph.Nodes[j].Coordinates[k].Y == current.Item1)
-                                                if (i != j)
-                                                    graph.Connect(i, j);
-                                matrix[current.Item1, current.Item2] = -1;
-                            }
-                            if (current.Item1 == startMatrixY && current.Item2 == startMatrixX) break; // вечный цикл до тех пор пока не дойдем до начальной клетки
-                        }
-                        graph.Nodes[i].Coordinates.RemoveAt(0);
-                        cleanMatrix[endMatrixY, endMatrixX] = cleanMatrix[startMatrixY, startMatrixX];
-                    }
+                    StartWave
+                        (
+                        (int)Math.Round(orderedConnections[i].PadFrom.CenterY + orderedConnections[i].PadFrom.Element.LocationY),
+                        (int)Math.Round(orderedConnections[i].PadFrom.CenterX + orderedConnections[i].PadFrom.Element.LocationX),
+                        (int)Math.Round(orderedConnections[i].PadTo.CenterY + orderedConnections[i].PadTo.Element.LocationY),
+                        (int)Math.Round(orderedConnections[i].PadTo.CenterX + orderedConnections[i].PadTo.Element.LocationX),
+                        matrix,
+                        comparer);
+                    var trace = GetTrace
+                    (
+                        (int)Math.Round(orderedConnections[i].PadFrom.CenterY + orderedConnections[i].PadFrom.Element.LocationY),
+                        (int)Math.Round(orderedConnections[i].PadFrom.CenterX + orderedConnections[i].PadFrom.Element.LocationX),
+                        (int)Math.Round(orderedConnections[i].PadTo.CenterY + orderedConnections[i].PadTo.Element.LocationY),
+                        (int)Math.Round(orderedConnections[i].PadTo.CenterX + orderedConnections[i].PadTo.Element.LocationX), 
+                        matrix
+                        );
+                    result[i] = trace;
                 }
             }
-            return matrixTraced;
+            if(ObjectiveFunction == ObjectiveFunction.MinimalDistance)
+            {
+                var comparer = MinimalDistanceComparer;
+                var startWaveTasks = new List<Task>();
+                var matrixes = new List<int[,]>();
+
+                for(int i = 0; i < orderedConnections.Count; i++)
+                {
+                    matrixes.Add((int[,])matrix.Clone());
+                    int j = i;
+                    startWaveTasks.Add(new Task(() => StartWave
+                    (
+                        (int)Math.Round(orderedConnections[j].PadFrom.CenterY + orderedConnections[j].PadFrom.Element.LocationY),
+                        (int)Math.Round(orderedConnections[j].PadFrom.CenterX + orderedConnections[j].PadFrom.Element.LocationX),
+                        (int)Math.Round(orderedConnections[j].PadTo.CenterY + orderedConnections[j].PadTo.Element.LocationY),
+                        (int)Math.Round(orderedConnections[j].PadTo.CenterX + orderedConnections[j].PadTo.Element.LocationX),
+                        matrixes[j],
+                        comparer)
+                    ));
+                }
+
+                foreach (var task in startWaveTasks)
+                    task.Start();
+                await Task.WhenAll(startWaveTasks);
+
+                var getTraceTasks = new List<Task<Trace>>();
+                for (int i = 0; i < orderedConnections.Count; i++)
+                {
+                    int j = i;
+                    getTraceTasks.Add(new Task<Trace>(() => GetTrace
+                    (
+                        (int)Math.Round(orderedConnections[j].PadFrom.CenterY + orderedConnections[j].PadFrom.Element.LocationY),
+                        (int)Math.Round(orderedConnections[j].PadFrom.CenterX + orderedConnections[j].PadFrom.Element.LocationX),
+                        (int)Math.Round(orderedConnections[j].PadTo.CenterY + orderedConnections[j].PadTo.Element.LocationY),
+                        (int)Math.Round(orderedConnections[j].PadTo.CenterX + orderedConnections[j].PadTo.Element.LocationX),
+                        matrixes[j])
+                    ));
+                }
+                foreach (var task in getTraceTasks)
+                    task.Start();
+                result = await Task.WhenAll(getTraceTasks);
+            }
+            return result;
+        }
+
+        private void VerticalPriorityCheckCase(int[,] matrixWithWave, Position currentPosition, int currentWave)
+        {
+
+            if (CheckIfPositionExists(matrixWithWave, currentPosition.Row + 1, currentPosition.Column) && matrixWithWave[currentPosition.Row + 1, currentPosition.Column] == currentWave - 1)
+            {
+                matrixWithWave[currentPosition.Row + 1, currentPosition.Column] = -1;
+                currentPosition.Row++;
+            }
+            else if (CheckIfPositionExists(matrixWithWave, currentPosition.Row - 1, currentPosition.Column) && matrixWithWave[currentPosition.Row - 1, currentPosition.Column] == currentWave - 1)
+            {
+                matrixWithWave[currentPosition.Row - 1, currentPosition.Column] = -1;
+                currentPosition.Row--;
+            }
+            else if (CheckIfPositionExists(matrixWithWave, currentPosition.Row, currentPosition.Column + 1) && matrixWithWave[currentPosition.Row, currentPosition.Column + 1] == currentWave - 1)
+            {
+                matrixWithWave[currentPosition.Row, currentPosition.Column + 1] = -1;
+                currentPosition.Column++;
+            }
+            else if (CheckIfPositionExists(matrixWithWave, currentPosition.Row, currentPosition.Column - 1) && matrixWithWave[currentPosition.Row, currentPosition.Column - 1] == currentWave - 1)
+            {
+                matrixWithWave[currentPosition.Row, currentPosition.Column - 1] = -1;
+                currentPosition.Column--;
+            }
+        }
+
+        private void HorizontalPriorityCheckCase(int[,] matrixWithWave, Position currentPosition, int currentWave)
+        {
+            if (matrixWithWave[currentPosition.Row, currentPosition.Column + 1] == currentWave - 1)
+            {
+                matrixWithWave[currentPosition.Row, currentPosition.Column + 1] = -1;
+                currentPosition.Column++;
+            }
+            else if (matrixWithWave[currentPosition.Row, currentPosition.Column - 1] == currentWave - 1)
+            {
+                matrixWithWave[currentPosition.Row, currentPosition.Column - 1] = -1;
+                currentPosition.Column--;
+            }
+            else if (matrixWithWave[currentPosition.Row + 1, currentPosition.Column] == currentWave - 1)
+            {
+                matrixWithWave[currentPosition.Row + 1, currentPosition.Column] = -1;
+                currentPosition.Row++;
+            }
+            else if (matrixWithWave[currentPosition.Row - 1, currentPosition.Column] == currentWave - 1)
+            {
+                matrixWithWave[currentPosition.Row - 1, currentPosition.Column] = -1;
+                currentPosition.Row--;
+            }
+        }
+
+        //очищает все волны, оставляет трассу, элементы и конец/начало трасс
+        //начало и конец текущуй трассы меняет на -1
+        private Trace GetTrace(int rowStart, int columnStart, int rowEnd, int columnEnd, int[,] matrixWithWave)
+        {
+            matrixWithWave[rowStart, columnStart] = 0;
+
+            var trace = new Trace();
+            trace.DirectionChangingCoords = new List<TracePoint>();
+            var currentWave = matrixWithWave[rowEnd, columnEnd];
+            var currentPosition = new Position(rowEnd, columnEnd);
+            var previousPosition = new Position(rowEnd, columnEnd);
+
+            var rowChanging = false;
+            var columnChanging = false;
+            var rowChanged = true;
+            var columnChanged = true;
+            // пока значение в начале не изменится, -1 - обозначает трассу
+            while (matrixWithWave[rowStart, columnStart] != -1)
+            {
+                if(Priority == TracePriority.Vertical)
+                {
+                    VerticalPriorityCheckCase(matrixWithWave, currentPosition, currentWave);
+                }
+                if(Priority == TracePriority.Horizontal)
+                {
+                    HorizontalPriorityCheckCase(matrixWithWave, currentPosition, currentWave);
+                }
+                currentWave--;
+
+                if(currentPosition.Row != previousPosition.Row && currentPosition.Column == previousPosition.Column)
+                {
+                    rowChanged = true;
+                    columnChanged = false;
+                }
+
+                if (currentPosition.Row == previousPosition.Row && currentPosition.Column != previousPosition.Column)
+                {
+                    rowChanged = false;
+                    columnChanged = true;
+                }
+
+                if(rowChanging != rowChanged || columnChanging != columnChanged)
+                {
+                    trace.DirectionChangingCoords.Add(new TracePoint(previousPosition.Column, previousPosition.Row));
+                    rowChanging = rowChanged;
+                    columnChanging = columnChanged;
+                }
+                previousPosition = new Position(currentPosition.Row, currentPosition.Column);
+            }
+            trace.DirectionChangingCoords.Add(new TracePoint(columnStart, rowStart));
+
+
+            for (int i = 0; i < matrixWithWave.GetLength(0); i++)
+            {
+                for (int j = 0; j < matrixWithWave.GetLength(1); j++)
+                    if (matrixWithWave[i, j] > 0)
+                        matrixWithWave[i, j] = 0;
+            }
+            matrixWithWave[rowEnd, columnEnd] = -1;
+
+            return trace;
+        }
+
+        //не меняет значение в клетке начала, меняет значение в клетке конца
+        private void StartWave(int rowStart, int columnStart, int rowEnd, int columnEnd, int[,] matrix, Func<int[,], int, int, int, int, int, bool> comparer)
+        {
+            var a = matrix[rowStart, columnStart];
+            var b = matrix[rowEnd, columnEnd];
+
+            var numbersPositions = new Dictionary<int, List<Position>>();
+            if (comparer(matrix, rowStart, columnStart, rowStart - 1, columnStart, matrix[rowStart, columnStart])) // если сверху можно провести трассу
+            {
+                matrix[rowStart - 1, columnStart] = 1;
+                numbersPositions.TryAdd(1, new List<Position>());
+                numbersPositions[1].Add(new Position(rowStart - 1, columnStart));
+            }
+
+            if (comparer(matrix, rowStart, columnStart, rowStart + 1, columnStart, matrix[rowStart, columnStart])) // если снизу можно провести трассу
+            {
+                matrix[rowStart + 1, columnStart] = 1;
+                numbersPositions.TryAdd(1, new List<Position>());
+                numbersPositions[1].Add(new Position(rowStart + 1, columnStart));
+            }
+
+            if (comparer(matrix, rowStart, columnStart, rowStart, columnStart - 1, matrix[rowStart, columnStart])) // если слева можно провести трассу
+            {
+                matrix[rowStart, columnStart - 1] = 1;
+                numbersPositions.TryAdd(1, new List<Position>());
+                numbersPositions[1].Add(new Position(rowStart, columnStart - 1));
+            }
+
+            if (comparer(matrix, rowStart, columnStart, rowStart, columnStart + 1, matrix[rowStart, columnStart])) // если справа можно провести трассу
+            {
+                matrix[rowStart, columnStart + 1] = 1;
+                numbersPositions.TryAdd(1, new List<Position>());
+                numbersPositions[1].Add(new Position(rowStart, columnStart + 1));
+            }
+
+            if (!numbersPositions.ContainsKey(1)) throw new Exception("Нет доступа к контактной площадке!");
+
+            int currentWave = 2;
+            while (matrix[rowEnd, columnEnd] == matrix[rowStart, columnStart])
+            {
+                foreach(var position in numbersPositions[currentWave - 1])
+                {
+                    if (comparer(matrix, position.Row, position.Column, position.Row - 1, position.Column, matrix[rowStart, columnStart])) // если сверху можно провести трассу
+                    {
+                        matrix[position.Row - 1, position.Column] = currentWave;
+                        numbersPositions.TryAdd(currentWave, new List<Position>());
+                        numbersPositions[currentWave].Add(new Position(position.Row - 1, position.Column));
+                    }
+
+                    if (comparer(matrix, position.Row, position.Column, position.Row + 1, position.Column, matrix[rowStart, columnStart])) // если снизу можно провести трассу
+                    {
+                        matrix[position.Row + 1, position.Column] = currentWave;
+                        numbersPositions.TryAdd(currentWave, new List<Position>());
+                        numbersPositions[currentWave].Add(new Position(position.Row + 1, position.Column));
+                    }
+
+                    if (comparer(matrix, position.Row, position.Column, position.Row, position.Column - 1, matrix[rowStart, columnStart])) // если слева можно провести трассу
+                    {
+                        matrix[position.Row, position.Column - 1] = currentWave;
+                        numbersPositions.TryAdd(currentWave, new List<Position>());
+                        numbersPositions[currentWave].Add(new Position(position.Row, position.Column - 1));
+                    }
+
+                    if (comparer(matrix, position.Row, position.Column, position.Row, position.Column + 1, matrix[rowStart, columnStart])) // если справа можно провести трассу
+                    {
+                        matrix[position.Row, position.Column + 1] = currentWave;
+                        numbersPositions.TryAdd(currentWave, new List<Position>());
+                        numbersPositions[currentWave].Add(new Position(position.Row, position.Column + 1));
+                    }
+                }
+                if (!numbersPositions.ContainsKey(currentWave)) throw new Exception($"Невозможно провести трассу! {currentWave}");
+                currentWave++;
+            }
         }
 
         private static bool ArrayEquality(int[,] arrA, int[,] arrB)
