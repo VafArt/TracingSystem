@@ -845,7 +845,7 @@ namespace TracingSystem
             //    { 0, 0, 0, 0, 0, 0, },
             //    { 0, 0, -3, 0, 0, 0, },
             //};
-            var tracingAlgorithm = new Tracing(ObjectiveFunction.MinimalLayerCount, TracePriority.Vertical);
+            var tracingAlgorithm = new Tracing(ObjectiveFunction.MinimalLayerCount, TracePriority.Horizontal);
             var currentPcb = _project?.Project?.Pcbs?.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text);
             var traces = await tracingAlgorithm.RunAsync(pcbMatrix);
             ScaleTracesCoords(traces, currentPcb.PadsConnections, 3, 11);
@@ -869,7 +869,7 @@ namespace TracingSystem
                 var fromPad = coordsToScale.First();
                 var toPad = coordsToScale.Last();
 
-                foreach(var connection in connections)
+                foreach (var connection in connections)
                 {
                     if (IsPointInSquare(
                         (int)Math.Round(connection.PadFrom.CenterX) + connection.PadFrom.Element.LocationX,
@@ -885,7 +885,7 @@ namespace TracingSystem
                         toPad.Y = (int)Math.Round(connection.PadTo.CenterY) + connection.PadTo.Element.LocationY;
                         break;
                     }
-                    if(IsPointInSquare(
+                    if (IsPointInSquare(
                         (int)Math.Round(connection.PadFrom.CenterX) + connection.PadFrom.Element.LocationX,
                         (int)Math.Round(connection.PadFrom.CenterY) + connection.PadFrom.Element.LocationY,
                         toPad.X * traceWidthWithPadding,
@@ -972,7 +972,7 @@ namespace TracingSystem
             foreach (var element in elements)
             {
                 var pads = element.Pads;
-                foreach(var pad in pads)
+                foreach (var pad in pads)
                 {
                     var padX = (element.LocationX + (int)Math.Round(pad.CenterX));
                     var padY = (element.LocationY + (int)Math.Round(pad.CenterY));
@@ -1005,9 +1005,9 @@ namespace TracingSystem
             var matrixWidth = (int)Math.Ceiling((decimal)workSpace.Width / traceWidthWithPadding);
             var pcbMatrix = new int[matrixHeight, matrixWidth];
 
-            for(int i = 0; i< pcbMatrix.GetLength(0); i++)
+            for (int i = 0; i < pcbMatrix.GetLength(0); i++)
             {
-                for(int j = 0; j < pcbMatrix.GetLength(1); j++)
+                for (int j = 0; j < pcbMatrix.GetLength(1); j++)
                 {
                     CheckIfHasPadInSquare(matrix, i * traceWidthWithPadding, j * traceWidthWithPadding, traceWidthWithPadding, out pcbMatrix[i, j]);
                 }
@@ -1017,14 +1017,14 @@ namespace TracingSystem
 
         private bool CheckIfHasPadInSquare(int[,] matrix, int row, int column, int squareSize, out int value)
         {
-            for(int i = row; i < row + squareSize; i++)
+            for (int i = row; i < row + squareSize; i++)
             {
-                for(int j = column; j < column + squareSize; j++) 
+                for (int j = column; j < column + squareSize; j++)
                 {
                     //если в этом квадрате есть начало или конец трассы которая обозначается цифровой меньшей -1
                     if (matrix[i, j] < -1)
                     {
-                        if(matrix[i, j] == -2)
+                        if (matrix[i, j] == -2)
                         {
 
                         }
@@ -1035,6 +1035,91 @@ namespace TracingSystem
             }
             value = default;
             return false;
+        }
+
+        private async void runBundleMenu_Click(object sender, EventArgs e)
+        {
+            var traces = _project.Project.Pcbs
+                .FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text)
+                .Layers
+                .SelectMany(layer => layer.Traces)
+                .ToList();
+
+            var graph = new Graph(traces.Count());
+
+            //находим пересекающиеся трассы
+            for (int i = 0; i < traces.Count() - 1; i++)
+            {
+                var currentLine = traces[i].DirectionChangingCoords.Select(tracePoint => tracePoint.GetPointF).ToList();
+                for (int j = i + 1; j < traces.Count(); j++)
+                {
+                    var anotherLine = traces[j].DirectionChangingCoords.Select(tracePoint => tracePoint.GetPointF).ToList();
+                    if (AreLinesIntersecting(currentLine, anotherLine))
+                        graph.Connect(i, j);
+                }
+            }
+
+            var veismanAlgorithm = new VeismanAlgorithm(graph);
+            var result = await veismanAlgorithm.RunAsync();
+            //создать класс результат расслоения, он содержит список Dictionary<Color,Trace>
+        }
+
+        public static bool AreLinesIntersecting(List<PointF> line1, List<PointF> line2)
+        {
+            for (int i = 0; i < line1.Count - 1; i++)
+            {
+                for (int j = 0; j < line2.Count - 1; j++)
+                {
+                    if (AreSegmentsIntersecting(line1[i], line1[i + 1], line2[j], line2[j + 1]))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static bool AreSegmentsIntersecting(PointF p1, PointF p2, PointF p3, PointF p4)
+        {
+            var d1 = Direction(p3, p4, p1);
+            var d2 = Direction(p3, p4, p2);
+            var d3 = Direction(p1, p2, p3);
+            var d4 = Direction(p1, p2, p4);
+
+            if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0)))
+            {
+                return true;
+            }
+            else if (d1 == 0 && IsOnSegment(p3, p4, p1))
+            {
+                return true;
+            }
+            else if (d2 == 0 && IsOnSegment(p3, p4, p2))
+            {
+                return true;
+            }
+            else if (d3 == 0 && IsOnSegment(p1, p2, p3))
+            {
+                return true;
+            }
+            else if (d4 == 0 && IsOnSegment(p1, p2, p4))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static float Direction(PointF p1, PointF p2, PointF p3)
+        {
+            return (p3.X - p1.X) * (p2.Y - p1.Y) - (p2.X - p1.X) * (p3.Y - p1.Y);
+        }
+
+        private static bool IsOnSegment(PointF p1, PointF p2, PointF p3)
+        {
+            return Math.Min(p1.X, p2.X) <= p3.X && p3.X <= Math.Max(p1.X, p2.X) &&
+                   Math.Min(p1.Y, p2.Y) <= p3.Y && p3.Y <= Math.Max(p1.Y, p2.Y);
         }
     }
 }

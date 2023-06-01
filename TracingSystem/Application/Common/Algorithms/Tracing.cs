@@ -268,31 +268,31 @@ namespace TracingSystem.Application.Common.Algorithms
 
         private void HorizontalPriorityCheckCase(int[,] matrixWithWave, Position currentPosition, int currentWave)
         {
-            if (matrixWithWave[currentPosition.Row, currentPosition.Column + 1] == currentWave - 1)
+            if (CheckIfPositionExists(matrixWithWave, currentPosition.Row, currentPosition.Column + 1) && matrixWithWave[currentPosition.Row, currentPosition.Column + 1] == currentWave - 1)
             {
                 matrixWithWave[currentPosition.Row, currentPosition.Column + 1] = -1;
                 currentPosition.Column++;
             }
-            else if (matrixWithWave[currentPosition.Row, currentPosition.Column - 1] == currentWave - 1)
+            else if (CheckIfPositionExists(matrixWithWave, currentPosition.Row, currentPosition.Column - 1) && matrixWithWave[currentPosition.Row, currentPosition.Column - 1] == currentWave - 1)
             {
                 matrixWithWave[currentPosition.Row, currentPosition.Column - 1] = -1;
                 currentPosition.Column--;
             }
-            else if (matrixWithWave[currentPosition.Row + 1, currentPosition.Column] == currentWave - 1)
+            else if (CheckIfPositionExists(matrixWithWave, currentPosition.Row + 1, currentPosition.Column) && matrixWithWave[currentPosition.Row + 1, currentPosition.Column] == currentWave - 1)
             {
                 matrixWithWave[currentPosition.Row + 1, currentPosition.Column] = -1;
                 currentPosition.Row++;
             }
-            else if (matrixWithWave[currentPosition.Row - 1, currentPosition.Column] == currentWave - 1)
+            else if (CheckIfPositionExists(matrixWithWave, currentPosition.Row - 1, currentPosition.Column) && matrixWithWave[currentPosition.Row - 1, currentPosition.Column] == currentWave - 1)
             {
                 matrixWithWave[currentPosition.Row - 1, currentPosition.Column] = -1;
                 currentPosition.Row--;
             }
         }
 
-        //очищает все волны, оставляет трассу, элементы и конец/начало трасс
-        //начало и конец текущуй трассы меняет на -1
-        private Trace GetTrace(int rowStart, int columnStart, int rowEnd, int columnEnd, int[,] matrixWithWave)
+            //очищает все волны, оставляет трассу, элементы и конец/начало трасс
+            //начало и конец текущуй трассы меняет на -1
+            private Trace GetTrace(int rowStart, int columnStart, int rowEnd, int columnEnd, int[,] matrixWithWave)
         {
             matrixWithWave[rowStart, columnStart] = 0;
 

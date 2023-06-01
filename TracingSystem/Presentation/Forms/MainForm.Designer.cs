@@ -250,6 +250,7 @@
             runBundleMenu.Name = "runBundleMenu";
             runBundleMenu.Size = new Size(208, 22);
             runBundleMenu.Text = "Выполнить расслоение";
+            runBundleMenu.Click += runBundleMenu_Click;
             // 
             // settingsMenu
             // 
