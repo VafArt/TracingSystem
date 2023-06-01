@@ -7,7 +7,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TracingSystem.Domain;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
 
 namespace TracingSystem.Application.Common.Algorithms
@@ -47,6 +46,19 @@ namespace TracingSystem.Application.Common.Algorithms
             {
                 Row = row;
                 Column = column;
+            }
+        }
+
+        private class Connection
+        {
+            public Position? From { get; set; }
+
+            public Position? To { get; set; }
+
+            public Connection(Position? from, Position? to)
+            {
+                From = from;
+                To = to;
             }
         }
 
@@ -107,33 +119,78 @@ namespace TracingSystem.Application.Common.Algorithms
             Priority = priority;
         }
 
-        public async Task<IEnumerable<Trace>> RunAsync(int[,] matrix, IEnumerable<PadsConnection> connections)
+        private List<Connection> GetConnections(int[,] matrix)
         {
+            //сформировать координаты трасс
+            var dict = new Dictionary<int, Connection>();
+            for (int i = 0; i < matrix.GetLength(0); i++)
+            {
+                for (int j = 0; j < matrix.GetLength(1); j++)
+                {
+                    if (matrix[i, j] < -2)
+                    {
+                        if (!dict.TryAdd(matrix[i, j], new Connection(new Position(i, j), null)))
+                            dict[matrix[i, j]].To = new Position(i, j);
+                    }
+                }
+            }
+            return dict.Values.ToList();
+        }
+
+        public async Task<IEnumerable<Trace>> RunAsync(int[,] matrix)
+        {
+            var connections = GetConnections(matrix);
             var result = new Trace[connections.Count()];
 
             // отсортировать в порядке увеличения расстояния между падами
-            var orderedConnections = connections.OrderBy(connection => Math.Sqrt(Math.Pow(connection.PadTo.CenterX - connection.PadFrom.CenterX, 2) + Math.Pow(connection.PadTo.CenterY - connection.PadFrom.CenterY, 2))).ToList();
+            var orderedConnections = connections.OrderBy(connection => Math.Sqrt(Math.Pow(connection.To.Row - connection.From.Row, 2) + Math.Pow(connection.To.Column - connection.From.Column, 2))).ToList();
 
             var clonedMatrix = (int[,])matrix.Clone();
             if(ObjectiveFunction == ObjectiveFunction.MinimalLayerCount)
             {
-                var comparer = MinimalLayerCountComparer;
                 for (int i = 0; i < orderedConnections.Count; i++)
                 {
-                    StartWave
+                    var comparer = MinimalLayerCountComparer;
+                    try
+                    {
+                        StartWave
                         (
-                        (int)Math.Round(orderedConnections[i].PadFrom.CenterY + orderedConnections[i].PadFrom.Element.LocationY),
-                        (int)Math.Round(orderedConnections[i].PadFrom.CenterX + orderedConnections[i].PadFrom.Element.LocationX),
-                        (int)Math.Round(orderedConnections[i].PadTo.CenterY + orderedConnections[i].PadTo.Element.LocationY),
-                        (int)Math.Round(orderedConnections[i].PadTo.CenterX + orderedConnections[i].PadTo.Element.LocationX),
+                        orderedConnections[i].From.Row,
+                        orderedConnections[i].From.Column,
+                        orderedConnections[i].To.Row,
+                        orderedConnections[i].To.Column,
                         matrix,
                         comparer);
+                    }
+                    catch
+                    {
+                        //почистить матрицу, после неудачной трассировки
+                        for (int k = 0; k < matrix.GetLength(0); k++)
+                        {
+                            for (int j = 0; j < matrix.GetLength(1); j++)
+                            {
+                                if (matrix[k, j] > 0)
+                                    matrix[k, j] = 0;
+                            }
+                        }
+
+
+                        comparer = MinimalDistanceComparer;
+                        StartWave
+                        (
+                        orderedConnections[i].From.Row,
+                        orderedConnections[i].From.Column,
+                        orderedConnections[i].To.Row,
+                        orderedConnections[i].To.Column,
+                        matrix,
+                        comparer);
+                    }
                     var trace = GetTrace
                     (
-                        (int)Math.Round(orderedConnections[i].PadFrom.CenterY + orderedConnections[i].PadFrom.Element.LocationY),
-                        (int)Math.Round(orderedConnections[i].PadFrom.CenterX + orderedConnections[i].PadFrom.Element.LocationX),
-                        (int)Math.Round(orderedConnections[i].PadTo.CenterY + orderedConnections[i].PadTo.Element.LocationY),
-                        (int)Math.Round(orderedConnections[i].PadTo.CenterX + orderedConnections[i].PadTo.Element.LocationX), 
+                        orderedConnections[i].From.Row,
+                        orderedConnections[i].From.Column,
+                        orderedConnections[i].To.Row,
+                        orderedConnections[i].To.Column,
                         matrix
                         );
                     result[i] = trace;
@@ -151,10 +208,10 @@ namespace TracingSystem.Application.Common.Algorithms
                     int j = i;
                     startWaveTasks.Add(new Task(() => StartWave
                     (
-                        (int)Math.Round(orderedConnections[j].PadFrom.CenterY + orderedConnections[j].PadFrom.Element.LocationY),
-                        (int)Math.Round(orderedConnections[j].PadFrom.CenterX + orderedConnections[j].PadFrom.Element.LocationX),
-                        (int)Math.Round(orderedConnections[j].PadTo.CenterY + orderedConnections[j].PadTo.Element.LocationY),
-                        (int)Math.Round(orderedConnections[j].PadTo.CenterX + orderedConnections[j].PadTo.Element.LocationX),
+                        orderedConnections[j].From.Row,
+                        orderedConnections[j].From.Column,
+                        orderedConnections[j].To.Row,
+                        orderedConnections[j].To.Column,
                         matrixes[j],
                         comparer)
                     ));
@@ -170,10 +227,10 @@ namespace TracingSystem.Application.Common.Algorithms
                     int j = i;
                     getTraceTasks.Add(new Task<Trace>(() => GetTrace
                     (
-                        (int)Math.Round(orderedConnections[j].PadFrom.CenterY + orderedConnections[j].PadFrom.Element.LocationY),
-                        (int)Math.Round(orderedConnections[j].PadFrom.CenterX + orderedConnections[j].PadFrom.Element.LocationX),
-                        (int)Math.Round(orderedConnections[j].PadTo.CenterY + orderedConnections[j].PadTo.Element.LocationY),
-                        (int)Math.Round(orderedConnections[j].PadTo.CenterX + orderedConnections[j].PadTo.Element.LocationX),
+                        orderedConnections[j].From.Row,
+                        orderedConnections[j].From.Column,
+                        orderedConnections[j].To.Row,
+                        orderedConnections[j].To.Column,
                         matrixes[j])
                     ));
                 }
@@ -299,8 +356,6 @@ namespace TracingSystem.Application.Common.Algorithms
         //не меняет значение в клетке начала, меняет значение в клетке конца
         private void StartWave(int rowStart, int columnStart, int rowEnd, int columnEnd, int[,] matrix, Func<int[,], int, int, int, int, int, bool> comparer)
         {
-            var a = matrix[rowStart, columnStart];
-            var b = matrix[rowEnd, columnEnd];
 
             var numbersPositions = new Dictionary<int, List<Position>>();
             if (comparer(matrix, rowStart, columnStart, rowStart - 1, columnStart, matrix[rowStart, columnStart])) // если сверху можно провести трассу
@@ -370,22 +425,5 @@ namespace TracingSystem.Application.Common.Algorithms
                 currentWave++;
             }
         }
-
-        private static bool ArrayEquality(int[,] arrA, int[,] arrB)
-        {
-            if (arrA.GetLength(0) != arrB.GetLength(0)) return false;
-            if (arrA.GetLength(1) != arrB.GetLength(1)) return false;
-
-            for (int i = 0; i < arrA.GetLength(0); i++)
-            {
-                for (int j = 0; j < arrA.GetLength(1); j++)
-                {
-                    if (arrA[i, j] != arrB[i, j]) return false;
-                }
-            }
-
-            return true;
-        }
-
     }
 }

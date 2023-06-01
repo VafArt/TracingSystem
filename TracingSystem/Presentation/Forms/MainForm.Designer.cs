@@ -83,7 +83,7 @@
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Padding = new Padding(3, 1, 0, 1);
-            menuStrip1.Size = new Size(862, 24);
+            menuStrip1.Size = new Size(827, 24);
             menuStrip1.TabIndex = 0;
             menuStrip1.Text = "menuStrip1";
             // 
@@ -264,7 +264,7 @@
             toolStrip.Items.AddRange(new ToolStripItem[] { saveTool, addElementTool, removeElementTool, addTraceTool, removeTraceTool, runTool, toolStripChoosePcb });
             toolStrip.Location = new Point(0, 24);
             toolStrip.Name = "toolStrip";
-            toolStrip.Size = new Size(862, 39);
+            toolStrip.Size = new Size(827, 39);
             toolStrip.TabIndex = 1;
             toolStrip.Text = "toolStrip1";
             // 
@@ -333,10 +333,10 @@
             // 
             status.ImageScalingSize = new Size(32, 32);
             status.Items.AddRange(new ToolStripItem[] { xStatus, yStatus, statusLabel, progressBarStatus, projectNameStatus });
-            status.Location = new Point(0, 460);
+            status.Location = new Point(0, 457);
             status.Name = "status";
             status.Padding = new Padding(1, 0, 8, 0);
-            status.Size = new Size(862, 25);
+            status.Size = new Size(827, 25);
             status.TabIndex = 2;
             status.Text = "statusStrip1";
             // 
@@ -379,7 +379,7 @@
             workSpace.Location = new Point(13, 50);
             workSpace.Margin = new Padding(0);
             workSpace.Name = "workSpace";
-            workSpace.Size = new Size(835, 403);
+            workSpace.Size = new Size(800, 400);
             workSpace.TabIndex = 3;
             workSpace.TabStop = false;
             workSpace.Paint += workSpace_Paint;
@@ -389,7 +389,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(862, 485);
+            ClientSize = new Size(827, 482);
             Controls.Add(workSpace);
             Controls.Add(status);
             Controls.Add(toolStrip);

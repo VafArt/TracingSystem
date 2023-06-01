@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ValueGeneration.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using OriginalCircuit.AltiumSharp;
 using OriginalCircuit.AltiumSharp.Drawing;
@@ -22,6 +23,7 @@ using TracingSystem.Domain.Errors;
 using TracingSystem.Domain.Shared;
 using TracingSystem.Persistance;
 using TracingSystem.Presentation.Forms;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using static TracingSystem.Domain.Errors.DomainErrors;
 using Pcb = TracingSystem.Domain.Pcb;
 
@@ -371,8 +373,6 @@ namespace TracingSystem
         private void workSpace_Paint(object sender, PaintEventArgs e)
         {
             var g = e.Graphics;
-            g.DrawLine(new Pen(Color.Red, 10), new Point(400, 400), new Point(400, 450));
-            g.DrawLine(new Pen(Color.Red, 10), new Point(416, 400), new Point(416, 450));
             g.SmoothingMode = SmoothingMode.HighQuality;
             var workspace = (PictureBox)sender;
             for (decimal relX = 0; relX < workSpace.Width; relX += (Convert.ToDecimal(0.393701) * workSpace.DeviceDpi))
@@ -389,26 +389,49 @@ namespace TracingSystem
             var padsConnections = _project?.Project?.Pcbs
                 ?.FirstOrDefault(pcb => toolStripChoosePcb.Text == pcb.Name)
                 ?.PadsConnections;
-            if (padsConnections is null) return;
-            foreach (var padConnection in padsConnections)
-            {
-                g.DrawLine(new Pen(Color.Red, 3),
-                    new PointF(padConnection.PadFrom.Element.LocationX + padConnection.PadFrom.CenterX, padConnection.PadFrom.Element.LocationY + padConnection.PadFrom.CenterY),
-                    new PointF(padConnection.PadTo.Element.LocationX + padConnection.PadTo.CenterX, padConnection.PadTo.Element.LocationY + padConnection.PadTo.CenterY)
-                    );
-            }
 
             var traces = _project?.Project?.Pcbs
                 ?.FirstOrDefault(pcb => toolStripChoosePcb.Text == pcb.Name)
                 ?.Layers
                 ?.SelectMany(layer => layer?.Traces).ToList();
 
-            if(traces is null) return;
-            var pen = new Pen(Color.Red, 1);
+            if (padsConnections != null && traces?.Count == 0)
+            {
+                foreach (var padConnection in padsConnections)
+                {
+                    g.DrawLine(new Pen(Color.Red, 3),
+                        new PointF(padConnection.PadFrom.Element.LocationX + padConnection.PadFrom.CenterX, padConnection.PadFrom.Element.LocationY + padConnection.PadFrom.CenterY),
+                        new PointF(padConnection.PadTo.Element.LocationX + padConnection.PadTo.CenterX, padConnection.PadTo.Element.LocationY + padConnection.PadTo.CenterY)
+                        );
+                }
+            }
+
+            //var traces = _project?.Project?.Pcbs
+            //    ?.FirstOrDefault(pcb => toolStripChoosePcb.Text == pcb.Name)
+            //    ?.Layers
+            //    ?.SelectMany(layer => layer?.Traces).ToList();
+
+            if (workSpace.Controls.Count == 0)
+            {
+                var elements = _project?.Project?.Pcbs
+                ?.FirstOrDefault(pcb => toolStripChoosePcb.Text == pcb.Name)
+                ?.Layers
+                ?.SelectMany(layer => layer.Elements).ToList();
+                if (elements != null)
+                {
+                    foreach (var element in elements)
+                    {
+                        g.DrawImage(element.ElementControl.Image, new Point(element.LocationX, element.LocationY));
+                    }
+                }
+            }
+
+            if (traces is null) return;
+            var pen = new Pen(Color.Red, 3);
             for (int i = 0; i < traces.Count; i++)
             {
                 var coords = traces[i]?.DirectionChangingCoords?.ToList();
-                if(coords is null) continue;
+                if (coords is null) continue;
                 for (int j = 0; j < coords.Count - 1; j++)
                 {
                     var fromPoint = coords[j].GetPointF;
@@ -772,11 +795,18 @@ namespace TracingSystem
                 removeElementMenu.Enabled = true;
                 removeTraceMenu.Enabled = true;
 
-                var elements = _project.Project.Pcbs
-                    .FirstOrDefault(pcb => pcb.Name == selectedPcb)
-                    .Layers.SelectMany(layer => layer.Elements);
-                foreach (var element in elements)
-                    workSpace.Controls.Add(element.ElementControl);
+                //если есть трассы, то есть трассировка уже сделана, не добавляем элементы, которые можно двигать, вместо этого добавится статичная картинка
+                var traces = _project?.Project?.Pcbs
+                    ?.FirstOrDefault(pcb => pcb.Name == selectedPcb)
+                    ?.Layers?.SelectMany(layer => layer?.Traces);
+                if (traces == null || traces?.Count() == 0)
+                {
+                    var elements = _project.Project.Pcbs
+                        .FirstOrDefault(pcb => pcb.Name == selectedPcb)
+                        .Layers.SelectMany(layer => layer.Elements);
+                    foreach (var element in elements)
+                        workSpace.Controls.Add(element.ElementControl);
+                }
             }
             workSpace.Invalidate();
         }
@@ -805,47 +835,106 @@ namespace TracingSystem
 
         private async void runTraceMenu_Click(object sender, EventArgs e)
         {
-            var pcbMatrix = PreparePcbMatrix();
+            var pcbMatrix = PreparePcbMatrix(3, 11);
             //var pcbMatrix = new int[,]
             //{
-            //    {0, 0, 0, 0, 0 },
-            //    {0, -3, 0, 0, 0 },
-            //    {0, 0, 0, 0, 0 },
-            //    {0, 0, 0, 0, 0 },
-            //    {0, 0, -3, 0, 0 },
-            //    {0, 0, 0, 0, 0 },
+            //    { 0, 0, -3, 0, 0, 0, },
+            //    { 0, 0, 0, 0, 0, 0, },
+            //    { 0, 0, 0, 0, 0, 0, },
+            //    { -4, 0, -2, 0, 0, -4, },
+            //    { 0, 0, 0, 0, 0, 0, },
+            //    { 0, 0, -3, 0, 0, 0, },
             //};
-            var padsConnections = new List<PadsConnection>
-            {
-                new PadsConnection
-                {
-                    PadFrom = new Pad
-                    {
-                        CenterX = 1,
-                        CenterY = 1,
-                        Element = new Element
-                        {
-                            LocationX = 0,
-                            LocationY = 0,
-                        }
-                    },
-                    PadTo = new Pad
-                    {
-                        CenterX = 2,
-                        CenterY = 4,
-                        Element = new Element
-                        {
-                            LocationX = 0,
-                            LocationY = 0,
-                        }
-                    }
-                }
-            };
-            var tracingAlgorithm = new Tracing(ObjectiveFunction.MinimalLayerCount, TracePriority.Horizontal);
+            var tracingAlgorithm = new Tracing(ObjectiveFunction.MinimalLayerCount, TracePriority.Vertical);
             var currentPcb = _project?.Project?.Pcbs?.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text);
-            var traces = await tracingAlgorithm.RunAsync(pcbMatrix, /*padsConnections*/ currentPcb?.PadsConnections);
+            var traces = await tracingAlgorithm.RunAsync(pcbMatrix);
+            ScaleTracesCoords(traces, currentPcb.PadsConnections, 3, 11);
+
             currentPcb.Layers.First().Traces = traces.ToList();
             _project.ChangeProject(_project.Project, ProjectState.Traced);
+
+            //удаляем все элементы, больше их нельзя двигать
+            workSpace.Controls.Clear();
+        }
+
+        private void ScaleTracesCoords(IEnumerable<Trace> traces, IEnumerable<PadsConnection> connections, int traceWidthInPixels, int padding)
+        {
+            var traceWidthWithPadding = traceWidthInPixels + padding * 2;
+
+            var tracesList = traces.ToList();
+            for (int i = 0; i < traces.Count(); i++)
+            {
+                var coordsToScale = tracesList[i].DirectionChangingCoords.ToList();
+                var clonedCoords = coordsToScale.Select(coord => new TracePoint(coord.X, coord.Y)).ToList();
+                var fromPad = coordsToScale.First();
+                var toPad = coordsToScale.Last();
+
+                foreach(var connection in connections)
+                {
+                    if (IsPointInSquare(
+                        (int)Math.Round(connection.PadFrom.CenterX) + connection.PadFrom.Element.LocationX,
+                        (int)Math.Round(connection.PadFrom.CenterY) + connection.PadFrom.Element.LocationY,
+                        fromPad.X * traceWidthWithPadding,
+                        fromPad.Y * traceWidthWithPadding,
+                        traceWidthWithPadding,
+                        traceWidthWithPadding))
+                    {
+                        fromPad.X = (int)Math.Round(connection.PadFrom.CenterX) + connection.PadFrom.Element.LocationX;
+                        fromPad.Y = (int)Math.Round(connection.PadFrom.CenterY) + connection.PadFrom.Element.LocationY;
+                        toPad.X = (int)Math.Round(connection.PadTo.CenterX) + connection.PadTo.Element.LocationX;
+                        toPad.Y = (int)Math.Round(connection.PadTo.CenterY) + connection.PadTo.Element.LocationY;
+                        break;
+                    }
+                    if(IsPointInSquare(
+                        (int)Math.Round(connection.PadFrom.CenterX) + connection.PadFrom.Element.LocationX,
+                        (int)Math.Round(connection.PadFrom.CenterY) + connection.PadFrom.Element.LocationY,
+                        toPad.X * traceWidthWithPadding,
+                        toPad.Y * traceWidthWithPadding,
+                        traceWidthWithPadding,
+                        traceWidthWithPadding))
+                    {
+                        fromPad.X = (int)Math.Round(connection.PadTo.CenterX) + connection.PadTo.Element.LocationX;
+                        fromPad.Y = (int)Math.Round(connection.PadTo.CenterY) + connection.PadTo.Element.LocationY;
+                        toPad.X = (int)Math.Round(connection.PadFrom.CenterX) + connection.PadFrom.Element.LocationX;
+                        toPad.Y = (int)Math.Round(connection.PadFrom.CenterY) + connection.PadFrom.Element.LocationY;
+                        break;
+                    }
+                }
+
+                for (int j = 1; j < coordsToScale.Count - 1; j++)
+                {
+                    //если поменялась координата Y, то X взять из предыдущего scale значения, а Y серединку
+                    if (clonedCoords[j].X == clonedCoords[j - 1].X && clonedCoords[j].Y != clonedCoords[j - 1].Y)
+                    {
+                        coordsToScale[j].X = coordsToScale[j - 1].X;
+                        coordsToScale[j].Y = clonedCoords[j - 1].Y * traceWidthWithPadding + traceWidthWithPadding / 2;
+                    }
+                    //если поменялась координата X, то Y взять из предыдущего scale значения, а X серединку
+                    if (clonedCoords[j].Y == clonedCoords[j - 1].Y && clonedCoords[j].X != clonedCoords[j - 1].X)
+                    {
+                        coordsToScale[j].X = clonedCoords[j - 1].X * traceWidthWithPadding + traceWidthWithPadding / 2;
+                        coordsToScale[j].Y = coordsToScale[j - 1].Y;
+                    }
+
+                    // отдельный случай для предпоследней точки, взять не серединку а значение последней точки
+                    if (clonedCoords[j].X == clonedCoords[j - 1].X && clonedCoords[j].Y != clonedCoords[j - 1].Y && j == coordsToScale.Count - 2)
+                    {
+                        coordsToScale[j].X = coordsToScale[j - 1].X;
+                        coordsToScale[j].Y = coordsToScale[j + 1].Y;
+                    }
+                    if (clonedCoords[j].Y == clonedCoords[j - 1].Y && clonedCoords[j].X != clonedCoords[j - 1].X && j == coordsToScale.Count - 2)
+                    {
+                        coordsToScale[j].X = coordsToScale[j + 1].X;
+                        coordsToScale[j].Y = coordsToScale[j - 1].Y;
+                    }
+                }
+            }
+        }
+
+        private bool IsPointInSquare(float x, float y, float squareX, float squareY, float squareWidth, float squareHeight)
+        {
+            if (x >= squareX && x <= squareX + squareWidth && y >= squareY && y <= squareY + squareHeight) return true;
+            return false;
         }
 
         private Graph CreateGraph()
@@ -865,54 +954,87 @@ namespace TracingSystem
             return graph;
         }
 
-        private int[,] PreparePcbMatrix()
+        //возвращает матрицу меньшую в (ширина трассы + 2 отступа) раз
+        private int[,] PreparePcbMatrix(int traceWidthInPixels, int padding)
         {
-            // в этом месте ширина и высота workspace должна вмещать все элементы иначе будет ошибка
-            var pcbMatrix = new int[workSpace.Height + 1, workSpace.Width + 1];
+            var traceWidthWithPadding = traceWidthInPixels + padding * 2;
+            //в этом месте ширина и высота workspace должна вмещать все элементы иначе будет ошибка
+            var matrixHeight = (int)Math.Ceiling((decimal)workSpace.Height / traceWidthWithPadding) * traceWidthWithPadding; // чтобы высота и ширина матрицы были кратны traceWidthWithPadding
+            var matrixWidth = (int)Math.Ceiling((decimal)workSpace.Width / traceWidthWithPadding) * traceWidthWithPadding;
+            var pcbMatrix = new int[matrixHeight, matrixWidth];
 
+
+            //обозначаем за стены координаты центров всех падов
+            var elements = _project.Project.Pcbs
+                .FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text)
+                .Layers
+                .SelectMany(layer => layer.Elements);
+            foreach (var element in elements)
+            {
+                var pads = element.Pads;
+                foreach(var pad in pads)
+                {
+                    var padX = (element.LocationX + (int)Math.Round(pad.CenterX));
+                    var padY = (element.LocationY + (int)Math.Round(pad.CenterY));
+                    pcbMatrix[padY, padX] = -2;
+                }
+            }
+
+            //обозначаем начало и конец трассы
             var connections = _project.Project.Pcbs.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text).PadsConnections.ToList();
             var minus = 3;
             for (int i = 0; i < connections.Count; i++)
             {
                 var connection = connections[i];
-                var padFromX = connection.PadFrom.Element.LocationX + (int)Math.Round(connection.PadFrom.CenterX);
-                var padFromY = connection.PadFrom.Element.LocationY + (int)Math.Round(connection.PadFrom.CenterY);
-                var padToX = connection.PadTo.Element.LocationX + (int)Math.Round(connection.PadTo.CenterX);
-                var padToY = connection.PadTo.Element.LocationY + (int)Math.Round(connection.PadTo.CenterY);
+                var padFromX = (connection.PadFrom.Element.LocationX + (int)Math.Round(connection.PadFrom.CenterX));
+                var padFromY = (connection.PadFrom.Element.LocationY + (int)Math.Round(connection.PadFrom.CenterY));
+                var padToX = (connection.PadTo.Element.LocationX + (int)Math.Round(connection.PadTo.CenterX));
+                var padToY = (connection.PadTo.Element.LocationY + (int)Math.Round(connection.PadTo.CenterY));
                 pcbMatrix[padFromY, padFromX] = i - minus;
                 pcbMatrix[padToY, padToX] = i - minus;
-                var from = pcbMatrix[padFromY, padFromX];
-                var to = pcbMatrix[padToY, padToX];
                 minus += 2;
             }
-            //не работает
-            //var elements = _project.Project.Pcbs.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text).Layers.SelectMany(layer => layer.Elements).ToList();
-            //for (int i = 0; i < elements.Count(); i++)
-            //{
-            //    некорректно будет работать если элемент расположен вертикально и нормально если горизонтально, если вертикально то вместо x надо y
-            //    var leftPad = (int)Math.Round(elements[i].Pads.Min(pad => pad.CenterX));
-            //    var rightPad = (int)Math.Round(elements[i].Pads.Max(pad => pad.CenterX));
-            //    var elementLocationX = leftPad + 10; //2 на всякий случай
-            //    var elementWidth = rightPad - leftPad - 10;
-            //    for (int j = 0; j < pcbMatrix.GetLength(0); j++)
-            //    {
-            //        for (int k = 0; k < pcbMatrix.GetLength(1); k++)
-            //        {
-            //            if (k >= elementLocationX && k <= elementLocationX + elementWidth && j >= elements[i].LocationY && j <= elements[i].LocationY + 50 + elements[i].ElementControl.Height - 50)
-            //                pcbMatrix[j, k] = -1; // или j k
-            //        }
-            //    }
+            var result = ScalePcbMatrix(pcbMatrix, traceWidthInPixels, padding);
+            return result;
+        }
 
-            //    for (int j = 0; j < pcbMatrix.GetLength(0); j++)
-            //    {
-            //        for (int k = 0; k < pcbMatrix.GetLength(1); k++)
-            //        {
-            //            if (k >= elements[i].LocationX + 50 && k <= elements[i].LocationX + elements[i].ElementControl.Width - 50 && j >= elements[i].LocationY + 50 && j <= elements[i].LocationY + elements[i].ElementControl.Height - 50)
-            //                pcbMatrix[j, k] = -1;
-            //        }
-            //    }
-            //}
+        private int[,] ScalePcbMatrix(int[,] matrix, int traceWidthInPixels, int padding)
+        {
+            var traceWidthWithPadding = traceWidthInPixels + padding * 2;
+            var matrixHeight = (int)Math.Ceiling((decimal)workSpace.Height / traceWidthWithPadding); // чтобы высота и ширина матрицы были кратны traceWidthWithPadding
+            var matrixWidth = (int)Math.Ceiling((decimal)workSpace.Width / traceWidthWithPadding);
+            var pcbMatrix = new int[matrixHeight, matrixWidth];
+
+            for(int i = 0; i< pcbMatrix.GetLength(0); i++)
+            {
+                for(int j = 0; j < pcbMatrix.GetLength(1); j++)
+                {
+                    CheckIfHasPadInSquare(matrix, i * traceWidthWithPadding, j * traceWidthWithPadding, traceWidthWithPadding, out pcbMatrix[i, j]);
+                }
+            }
             return pcbMatrix;
+        }
+
+        private bool CheckIfHasPadInSquare(int[,] matrix, int row, int column, int squareSize, out int value)
+        {
+            for(int i = row; i < row + squareSize; i++)
+            {
+                for(int j = column; j < column + squareSize; j++) 
+                {
+                    //если в этом квадрате есть начало или конец трассы которая обозначается цифровой меньшей -1
+                    if (matrix[i, j] < -1)
+                    {
+                        if(matrix[i, j] == -2)
+                        {
+
+                        }
+                        value = matrix[i, j];
+                        return true;
+                    }
+                }
+            }
+            value = default;
+            return false;
         }
     }
 }

@@ -1,0 +1,285 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="TracingSystem.Application.Common.Algorithms.Edge">
+    <Position X="25.5" Y="8.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAAAAAAEAAAAAAAAIAAAAAAIAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Application\Common\Algorithms\Edge.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TracingSystem.Application.Common.Algorithms.Graph">
+    <Position X="25.5" Y="12" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAggAAAIAAAAACACAAAAIBAAAEAAAAAAAAAAAAAIAA=</HashCode>
+      <FileName>Application\Common\Algorithms\Graph.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TracingSystem.Application.Common.Algorithms.Node">
+    <Position X="28" Y="12" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAIAAAAAAAAAAAIAAIAAAAAQAAAAAgQAAAgA=</HashCode>
+      <FileName>Application\Common\Algorithms\Node.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TracingSystem.Application.Common.Algorithms.Tracing">
+    <Position X="21.75" Y="7.25" Width="2.25" />
+    <NestedTypes>
+      <Class Name="TracingSystem.Application.Common.Algorithms.Tracing.Position" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Application\Common\Algorithms\Tracing.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+      <Class Name="TracingSystem.Application.Common.Algorithms.Tracing.Connection" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Application\Common\Algorithms\Tracing.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAAACQgAAAAAAACEEAAAACAAAAAEAAEAAAAQABABAAA=</HashCode>
+      <FileName>Application\Common\Algorithms\Tracing.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TracingSystem.Application.Common.Algorithms.VeismanAlgorithm">
+    <Position X="21.75" Y="12" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>EAAAAQCAAAAAABAAAAAAIAAAAAAAAAkAAAAAIAAAAAI=</HashCode>
+      <FileName>Application\Common\Algorithms\VeismanAlgorithm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TracingSystem.Domain.Element">
+    <Position X="21.75" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAQAAAAAAAIAAAQAIAAAABAEAABAAAAAAAA=</HashCode>
+      <FileName>Domain\Element.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TracingSystem.Domain.Layer">
+    <Position X="17.5" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAAAEAQAAAAAAAAABAAAAAAAAAgAAQ=</HashCode>
+      <FileName>Domain\Layer.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TracingSystem.Domain.Pad">
+    <Position X="24.75" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAAGAgAAAAABAAAAIAAAAAAABAAAAA=</HashCode>
+      <FileName>Domain\Pad.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TracingSystem.Domain.Pcb">
+    <Position X="17.25" Y="4.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAABAAAAAAAAAAACEQABAAAAAAEAAAAAAgAAAA=</HashCode>
+      <FileName>Domain\Pcb.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TracingSystem.Domain.Project">
+    <Position X="12.25" Y="4.75" Width="2.25" />
+    <Members>
+      <Property Name="PossibleElementNamesJson" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAACAAAAIAAAAAAAAAAAAAQAAAAAAAAAAAAAFAAAABA=</HashCode>
+      <FileName>Domain\Project.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TracingSystem.Domain.Trace">
+    <Position X="21.75" Y="4.25" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAAAAAAAABAAAAAAAAEAABAAAACAAA=</HashCode>
+      <FileName>Domain\Trace.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TracingSystem.Domain.TracePoint">
+    <Position X="25.5" Y="4.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAEAAAAAAAAAAAAAABAAAAAAAAAAAAA=</HashCode>
+      <FileName>Domain\TracePoint.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TracingSystem.Presentation.Forms.AddElementForm">
+    <Position X="16.25" Y="12.25" Width="2.25" />
+    <Members>
+      <Field Name="_project" Hidden="true" />
+      <Method Name="AddElementForm" Hidden="true" />
+      <Field Name="components" Hidden="true" />
+      <Method Name="Dispose" Hidden="true" />
+      <Method Name="InitializeComponent" Hidden="true" />
+      <Field Name="label1" Hidden="true" />
+      <Field Name="Mediator" Hidden="true" />
+      <Field Name="panel" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAABAQACCAAAACCAAABCAAAAAAAQAAAAA=</HashCode>
+      <FileName>Presentation\Forms\AddElementForm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TracingSystem.AlgorithmDetailsForm">
+    <Position X="12.25" Y="9.25" Width="2.25" />
+    <Members>
+      <Field Name="button1" Hidden="true" />
+      <Field Name="button2" Hidden="true" />
+      <Field Name="button3" Hidden="true" />
+      <Field Name="checkBox1" Hidden="true" />
+      <Field Name="checkBox2" Hidden="true" />
+      <Field Name="components" Hidden="true" />
+      <Method Name="Dispose" Hidden="true" />
+      <Method Name="InitializeComponent" Hidden="true" />
+      <Field Name="label1" Hidden="true" />
+      <Field Name="label2" Hidden="true" />
+      <Field Name="label3" Hidden="true" />
+      <Field Name="listBox1" Hidden="true" />
+      <Field Name="listBox2" Hidden="true" />
+      <Field Name="listBox3" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAEAACAAABEAAACAAAACAAA4AAIAAGAAAAEEAAA=</HashCode>
+      <FileName>Presentation\Forms\AlgorithmDetailsForm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TracingSystem.DeleteProjectForm">
+    <Position X="12.75" Y="7.25" Width="1.75" />
+    <Members>
+      <Field Name="_dbContext" Hidden="true" />
+      <Field Name="components" Hidden="true" />
+      <Method Name="DeleteProjectForm" Hidden="true" />
+      <Method Name="Dispose" Hidden="true" />
+      <Method Name="InitializeComponent" Hidden="true" />
+      <Field Name="label1" Hidden="true" />
+      <Field Name="Mediator" Hidden="true" />
+      <Field Name="panel" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAABAAAAACAAABAAAACAAAACCAAAAAAAAAAAAQAEAAA=</HashCode>
+      <FileName>Presentation\Forms\DeleteProjectForm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TracingSystem.MainForm">
+    <Position X="16.25" Y="7.25" Width="2.75" />
+    <Members>
+      <Field Name="_componentX" Hidden="true" />
+      <Field Name="_componentY" Hidden="true" />
+      <Field Name="_dbContext" Hidden="true" />
+      <Field Name="_pcbLibReader" Hidden="true" />
+      <Field Name="_pcbLibRenderer" Hidden="true" />
+      <Field Name="_project" Hidden="true" />
+      <Field Name="addElementMenu" Hidden="true" />
+      <Field Name="addElementTool" Hidden="true" />
+      <Method Name="AddElementToProject" Hidden="true" />
+      <Field Name="addLayerMenu" Hidden="true" />
+      <Field Name="addPcbToolStripMenuItem" Hidden="true" />
+      <Field Name="addTraceMenu" Hidden="true" />
+      <Field Name="addTraceTool" Hidden="true" />
+      <Method Name="AlignStatusStrip" Hidden="true" />
+      <Method Name="AskToSaveProjectAsync" Hidden="true" />
+      <Field Name="changePcbNameToolStripMenuItem" Hidden="true" />
+      <Method Name="changePcbNameToolStripMenuItem_Click" Hidden="true" />
+      <Field Name="changeProjectNameMenu" Hidden="true" />
+      <Method Name="CheckIfHasPadInSquare" Hidden="true" />
+      <Method Name="CheckIfPointInEllipse" Hidden="true" />
+      <Field Name="closeProgramProjectMenu" Hidden="true" />
+      <Field Name="closeProjectMenu" Hidden="true" />
+      <Field Name="components" Hidden="true" />
+      <Method Name="ConfiguredAlgorithmConfiguration" Hidden="true" />
+      <Method Name="ConfiguredDataConfiguration" Hidden="true" />
+      <Method Name="CreateGraph" Hidden="true" />
+      <Field Name="createProjectMenu" Hidden="true" />
+      <Field Name="deletePcbToolStripMenuItem" Hidden="true" />
+      <Method Name="Dispose" Hidden="true" />
+      <Field Name="editMenu" Hidden="true" />
+      <Method Name="ElementControlLocationChangedHandler" Hidden="true" />
+      <Method Name="ElementControlMouseDownHandler" Hidden="true" />
+      <Method Name="ElementControlMouseMoveHandler" Hidden="true" />
+      <Method Name="HandleElementCreation" Hidden="true" />
+      <Method Name="InitializeComponent" Hidden="true" />
+      <Method Name="IsPointInSquare" Hidden="true" />
+      <Method Name="MainForm" Hidden="true" />
+      <Method Name="MainForm_SizeChanged" Hidden="true" />
+      <Field Name="Mediator" Hidden="true" />
+      <Field Name="menuStrip1" Hidden="true" />
+      <Method Name="OnProjectChanged" Hidden="true" />
+      <Method Name="OnStateChanged" Hidden="true" />
+      <Method Name="OpenedProjectConfiguration" Hidden="true" />
+      <Field Name="openPcbLib" Hidden="true" />
+      <Field Name="openProjectMenu" Hidden="true" />
+      <Field Name="pcbDetailsMenu" Hidden="true" />
+      <Method Name="PreparePcbMatrix" Hidden="true" />
+      <Field Name="progressBarStatus" Hidden="true" />
+      <Field Name="projectDetailsMenu" Hidden="true" />
+      <Field Name="projectMenu" Hidden="true" />
+      <Field Name="projectNameStatus" Hidden="true" />
+      <Field Name="removeElementMenu" Hidden="true" />
+      <Field Name="removeElementTool" Hidden="true" />
+      <Field Name="removeProjectMenu" Hidden="true" />
+      <Field Name="removeTraceMenu" Hidden="true" />
+      <Field Name="removeTraceTool" Hidden="true" />
+      <Method Name="RenderPcbComponent" Hidden="true" />
+      <Field Name="runBundleMenu" Hidden="true" />
+      <Field Name="runMenu" Hidden="true" />
+      <Field Name="runTool" Hidden="true" />
+      <Field Name="runTraceMenu" Hidden="true" />
+      <Field Name="saveAsProjectMenu" Hidden="true" />
+      <Field Name="saveProjectMenu" Hidden="true" />
+      <Field Name="saveTool" Hidden="true" />
+      <Method Name="ScalePcbMatrix" Hidden="true" />
+      <Method Name="ScaleTracesCoords" Hidden="true" />
+      <Field Name="settingsMenu" Hidden="true" />
+      <Method Name="StartupConfiguration" Hidden="true" />
+      <Field Name="status" Hidden="true" />
+      <Field Name="statusLabel" Hidden="true" />
+      <Field Name="toolStrip" Hidden="true" />
+      <Method Name="toolStrip_LayoutCompleted" Hidden="true" />
+      <Field Name="toolStripChoosePcb" Hidden="true" />
+      <Method Name="toolStripChoosePcb_TextChanged" Hidden="true" />
+      <Method Name="TracedConfiguration" Hidden="true" />
+      <Field Name="tracingResult" Hidden="true" />
+      <Field Name="workSpace" Hidden="true" />
+      <Method Name="workSpace_MouseMove" Hidden="true" />
+      <Method Name="workSpace_Paint" Hidden="true" />
+      <Field Name="xStatus" Hidden="true" />
+      <Field Name="yStatus" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>cQ4pAARABikAMQAGFmLgIkGCzlICAYYxyERgiVUUsgA=</HashCode>
+      <FileName>Presentation\Forms\MainForm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TracingSystem.OpenProjectForm">
+    <Position X="12.5" Y="2.75" Width="2" />
+    <Members>
+      <Field Name="_project" Hidden="true" />
+      <Field Name="_projectNames" Hidden="true" />
+      <Field Name="components" Hidden="true" />
+      <Method Name="Dispose" Hidden="true" />
+      <Method Name="InitializeComponent" Hidden="true" />
+      <Field Name="label1" Hidden="true" />
+      <Field Name="Mediator" Hidden="true" />
+      <Field Name="panel" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAQACAEABAAACCAAAACCAAAAAAAAAAAAQAAAAA=</HashCode>
+      <FileName>Presentation\Forms\OpenProjectForm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TracingSystem.PcbInfoForm">
+    <Position X="13" Y="12.25" Width="1.5" />
+    <Members>
+      <Field Name="button1" Hidden="true" />
+      <Field Name="components" Hidden="true" />
+      <Method Name="Dispose" Hidden="true" />
+      <Method Name="InitializeComponent" Hidden="true" />
+      <Field Name="label1" Hidden="true" />
+      <Field Name="label2" Hidden="true" />
+      <Method Name="PcbInfoForm" Hidden="true" />
+      <Field Name="textBoxHeight" Hidden="true" />
+      <Field Name="textBoxWidth" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAABACAACAAAACAAAKAAAABEAAAACAAAA=</HashCode>
+      <FileName>Presentation\Forms\PcbInfoForm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
