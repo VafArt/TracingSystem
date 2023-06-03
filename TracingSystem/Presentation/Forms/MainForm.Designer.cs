@@ -69,6 +69,7 @@
             progressBarStatus = new ToolStripProgressBar();
             projectNameStatus = new ToolStripStatusLabel();
             workSpace = new PictureBox();
+            toolStripRecomendationsMenu = new ToolStripMenuItem();
             menuStrip1.SuspendLayout();
             toolStrip.SuspendLayout();
             status.SuspendLayout();
@@ -78,7 +79,7 @@
             // menuStrip1
             // 
             menuStrip1.ImageScalingSize = new Size(32, 32);
-            menuStrip1.Items.AddRange(new ToolStripItem[] { projectMenu, projectDetailsMenu, editMenu, runMenu, toolStripChooseBundle });
+            menuStrip1.Items.AddRange(new ToolStripItem[] { projectMenu, projectDetailsMenu, editMenu, toolStripRecomendationsMenu, runMenu, toolStripChooseBundle });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Padding = new Padding(3, 1, 0, 1);
@@ -381,6 +382,13 @@
             workSpace.Paint += workSpace_Paint;
             workSpace.MouseMove += workSpace_MouseMove;
             // 
+            // toolStripRecomendationsMenu
+            // 
+            toolStripRecomendationsMenu.Name = "toolStripRecomendationsMenu";
+            toolStripRecomendationsMenu.Size = new Size(100, 23);
+            toolStripRecomendationsMenu.Text = "Рекомендации";
+            toolStripRecomendationsMenu.Click += toolStripRecomendationsMenu_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -447,5 +455,6 @@
         private ToolStripMenuItem changePcbNameToolStripMenuItem;
         private ToolStripComboBox toolStripChooseBundle;
         private ToolStripMenuItem bundleSettingsMenu;
+        private ToolStripMenuItem toolStripRecomendationsMenu;
     }
 }

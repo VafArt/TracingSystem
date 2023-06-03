@@ -119,7 +119,7 @@ namespace TracingSystem
             //если выбран проект в toolStrip добавляются платы для выбора
             if (_project.Project is null || _project.Project.Pcbs is null) return;
 
-            if(toolStripChoosePcb.Items.Count == 0)
+            if (toolStripChoosePcb.Items.Count == 0)
                 foreach (var pcb in _project.Project.Pcbs)
                     toolStripChoosePcb.Items.Add(pcb.Name);
             //очищается выбранное расслоение
@@ -128,6 +128,7 @@ namespace TracingSystem
             //если есть расслоение появляется окно выбора расслоения
             if (_project.Project.BundleResults != null)
             {
+                toolStripRecomendationsMenu.Visible = true;
                 toolStripChooseBundle.Visible = true;
                 toolStripChooseBundle.Text = "Выбор расслоения";
                 toolStripChooseBundle.Items.Add("Без расслоения");
@@ -137,6 +138,7 @@ namespace TracingSystem
             else
             {
                 toolStripChooseBundle.Items.Clear();
+                toolStripRecomendationsMenu.Visible = false;
                 toolStripChooseBundle.Visible = false;
             }
         }
@@ -163,6 +165,8 @@ namespace TracingSystem
             deletePcbToolStripMenuItem.Enabled = false;
             changePcbNameToolStripMenuItem.Enabled = false;
             bundleSettingsMenu.Enabled = false;
+            toolStripRecomendationsMenu.Visible = false;
+
         }
 
         private void OpenedProjectConfiguration()
@@ -1256,6 +1260,24 @@ namespace TracingSystem
                     }
                 }
             };
+        }
+
+
+        private string[,] _layerRecomendationTable = new string[,]
+        {
+            { "CE", "ECE", "", "", "", "", "" },
+            { "CCE", "ECCE\nCE-EC", "", "", "", "", "" },
+            { "", "CCE-EC", "", "CE-ECE-EC", "", "", ""},
+            { "", "CCE-ECC", "","CE-ECCE-EC","","CE-ECE-ECE-EC","" },
+            { "", "", "", "CE-ECCE-ECC\nCCE-ECE-ECC", "", "CE-ECE-ECE-EC\nCE-ECE-ECCE-EC", "" },
+            { "", "", "", "CCE-ECCE-ECC", "", "CE-ECE-ECCE-EC\nCE-ECCE-ECE-ECC\nCCE-ECE-ECE-ECC", "" },
+            { "", "", "", "", "", "CE-ECCE-ECCE-ECC\nCCE-ECE-ECCE-ECC", "" }
+        };
+        private void toolStripRecomendationsMenu_Click(object sender, EventArgs e)
+        {
+            var potentialLayersCount = int.Parse(Microsoft.VisualBasic.Interaction.InputBox("Введите количество потенциальных слоев:", "Рекомендации"));
+            var signalLayersCount = _project.Project.BundleResults[0].Count - potentialLayersCount;
+            MessageBox.Show("Структура МПП:\n" + _layerRecomendationTable[signalLayersCount - 1, potentialLayersCount - 1]);
         }
     }
 }
