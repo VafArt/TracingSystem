@@ -142,15 +142,18 @@ namespace TracingSystem.Application.Common.Algorithms
             var connections = GetConnections(matrix);
             var result = new Trace[connections.Count()];
 
+            //чтобы не менять матрицу в ней только трассы и неиспользуемые пады
+            var mainMatrix = (int[,])matrix.Clone();
+
             // отсортировать в порядке увеличения расстояния между падами
             var orderedConnections = connections.OrderBy(connection => Math.Sqrt(Math.Pow(connection.To.Row - connection.From.Row, 2) + Math.Pow(connection.To.Column - connection.From.Column, 2))).ToList();
 
-            var clonedMatrix = (int[,])matrix.Clone();
             if(ObjectiveFunction == ObjectiveFunction.MinimalLayerCount)
             {
                 for (int i = 0; i < orderedConnections.Count; i++)
                 {
                     var comparer = MinimalLayerCountComparer;
+                    var clone = (int[,])mainMatrix.Clone();
                     try
                     {
                         StartWave
@@ -159,41 +162,51 @@ namespace TracingSystem.Application.Common.Algorithms
                         orderedConnections[i].From.Column,
                         orderedConnections[i].To.Row,
                         orderedConnections[i].To.Column,
-                        matrix,
+                        clone,
                         comparer);
+                        var trace = GetTrace
+                            (
+                            orderedConnections[i].From.Row,
+                            orderedConnections[i].From.Column,
+                            orderedConnections[i].To.Row,
+                            orderedConnections[i].To.Column,
+                            clone
+                            );
+                        mainMatrix = clone;
+                        result[i] = trace;
                     }
                     catch
                     {
-                        //почистить матрицу, после неудачной трассировки
-                        for (int k = 0; k < matrix.GetLength(0); k++)
-                        {
-                            for (int j = 0; j < matrix.GetLength(1); j++)
-                            {
-                                if (matrix[k, j] > 0)
-                                    matrix[k, j] = 0;
-                            }
-                        }
-
-
+                        //почистить матрицу, после неудачной трассировки чтобы остались только пады
+                        clone = (int[,])matrix.Clone();
                         comparer = MinimalDistanceComparer;
                         StartWave
-                        (
-                        orderedConnections[i].From.Row,
-                        orderedConnections[i].From.Column,
-                        orderedConnections[i].To.Row,
-                        orderedConnections[i].To.Column,
-                        matrix,
-                        comparer);
+                            (
+                            orderedConnections[i].From.Row,
+                            orderedConnections[i].From.Column,
+                            orderedConnections[i].To.Row,
+                            orderedConnections[i].To.Column,
+                            clone,
+                            comparer);
+                        var trace = GetTrace
+                            (
+                            orderedConnections[i].From.Row,
+                            orderedConnections[i].From.Column,
+                            orderedConnections[i].To.Row,
+                            orderedConnections[i].To.Column,
+                            clone
+                            );
+                        result[i] = trace;
+                        //переносим эту трассу в основную матрицу
+                        for (int k = 0; k < clone.GetLength(0); k++)
+                        {
+                            for (int j = 0; j < clone.GetLength(1); j++)
+                            {
+                                if (clone[k, j] == -1)
+                                    mainMatrix[k, j] = -1;
+                            }
+                        }
                     }
-                    var trace = GetTrace
-                    (
-                        orderedConnections[i].From.Row,
-                        orderedConnections[i].From.Column,
-                        orderedConnections[i].To.Row,
-                        orderedConnections[i].To.Column,
-                        matrix
-                        );
-                    result[i] = trace;
                 }
             }
             if(ObjectiveFunction == ObjectiveFunction.MinimalDistance)
@@ -204,7 +217,7 @@ namespace TracingSystem.Application.Common.Algorithms
 
                 for(int i = 0; i < orderedConnections.Count; i++)
                 {
-                    matrixes.Add((int[,])matrix.Clone());
+                    matrixes.Add((int[,])mainMatrix.Clone());
                     int j = i;
                     startWaveTasks.Add(new Task(() => StartWave
                     (
@@ -290,9 +303,9 @@ namespace TracingSystem.Application.Common.Algorithms
             }
         }
 
-            //очищает все волны, оставляет трассу, элементы и конец/начало трасс
-            //начало и конец текущуй трассы меняет на -1
-            private Trace GetTrace(int rowStart, int columnStart, int rowEnd, int columnEnd, int[,] matrixWithWave)
+        //очищает все волны, оставляет трассу, элементы и конец/начало трасс
+        //начало и конец текущуй трассы меняет на -1
+        private Trace GetTrace(int rowStart, int columnStart, int rowEnd, int columnEnd, int[,] matrixWithWave)
         {
             matrixWithWave[rowStart, columnStart] = 0;
 
@@ -309,13 +322,86 @@ namespace TracingSystem.Application.Common.Algorithms
             // пока значение в начале не изменится, -1 - обозначает трассу
             while (matrixWithWave[rowStart, columnStart] != -1)
             {
-                if(Priority == TracePriority.Vertical)
+                if (Priority == TracePriority.Vertical)
                 {
                     VerticalPriorityCheckCase(matrixWithWave, currentPosition, currentWave);
                 }
-                if(Priority == TracePriority.Horizontal)
+                if (Priority == TracePriority.Horizontal)
                 {
                     HorizontalPriorityCheckCase(matrixWithWave, currentPosition, currentWave);
+                }
+                currentWave--;
+
+                if (currentPosition.Row != previousPosition.Row && currentPosition.Column == previousPosition.Column)
+                {
+                    rowChanged = true;
+                    columnChanged = false;
+                }
+
+                if (currentPosition.Row == previousPosition.Row && currentPosition.Column != previousPosition.Column)
+                {
+                    rowChanged = false;
+                    columnChanged = true;
+                }
+
+                if (rowChanging != rowChanged || columnChanging != columnChanged)
+                {
+                    trace.DirectionChangingCoords.Add(new TracePoint(previousPosition.Column, previousPosition.Row));
+                    rowChanging = rowChanged;
+                    columnChanging = columnChanged;
+                }
+                previousPosition = new Position(currentPosition.Row, currentPosition.Column);
+            }
+            trace.DirectionChangingCoords.Add(new TracePoint(columnStart, rowStart));
+
+
+            for (int i = 0; i < matrixWithWave.GetLength(0); i++)
+            {
+                for (int j = 0; j < matrixWithWave.GetLength(1); j++)
+                    if (matrixWithWave[i, j] > 0)
+                        matrixWithWave[i, j] = 0;
+            }
+            matrixWithWave[rowEnd, columnEnd] = -1;
+
+            return trace;
+        }
+        private Trace GetTraceMinimalLayerCountVersion(int rowStart, int columnStart, int rowEnd, int columnEnd, int[,] matrixWithWave)
+        {
+            matrixWithWave[rowStart, columnStart] = 0;
+
+            //клонируем матрицу и все трассы меняем на свободное пространство
+            var clonedMatrix = new int[matrixWithWave.GetLength(0), matrixWithWave.GetLength(1)];
+            for (int i = 0; i < clonedMatrix.GetLength(0); i++)
+            {
+                for (int j = 0; j < clonedMatrix.GetLength(1); j++)
+                {
+                    clonedMatrix[i,j] = clonedMatrix[i,j];
+                    if (clonedMatrix[i, j] == -1)
+                        clonedMatrix[i, j] = 0;
+                }
+            }
+
+
+            var trace = new Trace();
+            trace.DirectionChangingCoords = new List<TracePoint>();
+            var currentWave = clonedMatrix[rowEnd, columnEnd];
+            var currentPosition = new Position(rowEnd, columnEnd);
+            var previousPosition = new Position(rowEnd, columnEnd);
+
+            var rowChanging = false;
+            var columnChanging = false;
+            var rowChanged = true;
+            var columnChanged = true;
+            // пока значение в начале не изменится, -1 - обозначает трассу
+            while (clonedMatrix[rowStart, columnStart] != -1)
+            {
+                if(Priority == TracePriority.Vertical)
+                {
+                    VerticalPriorityCheckCase(clonedMatrix, currentPosition, currentWave);
+                }
+                if(Priority == TracePriority.Horizontal)
+                {
+                    HorizontalPriorityCheckCase(clonedMatrix, currentPosition, currentWave);
                 }
                 currentWave--;
 
@@ -342,13 +428,23 @@ namespace TracingSystem.Application.Common.Algorithms
             trace.DirectionChangingCoords.Add(new TracePoint(columnStart, rowStart));
 
 
-            for (int i = 0; i < matrixWithWave.GetLength(0); i++)
+            for (int i = 0; i < clonedMatrix.GetLength(0); i++)
             {
-                for (int j = 0; j < matrixWithWave.GetLength(1); j++)
-                    if (matrixWithWave[i, j] > 0)
-                        matrixWithWave[i, j] = 0;
+                for (int j = 0; j < clonedMatrix.GetLength(1); j++)
+                    if (clonedMatrix[i, j] > 0)
+                        clonedMatrix[i, j] = 0;
             }
-            matrixWithWave[rowEnd, columnEnd] = -1;
+            clonedMatrix[rowEnd, columnEnd] = -1;
+
+            //перенести трассу из клонированной матрицы в основную (лень делать по нормальному поэтому так)
+            for (int i = 0; i < clonedMatrix.GetLength(0); i++)
+            {
+                for (int j = 0; j < clonedMatrix.GetLength(1); j++)
+                {
+                    if (clonedMatrix[i, j] == -1)
+                        matrixWithWave[i, j] = -1;
+                }
+            }
 
             return trace;
         }

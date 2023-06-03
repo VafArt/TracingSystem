@@ -6,10 +6,13 @@ using OriginalCircuit.AltiumSharp;
 using OriginalCircuit.AltiumSharp.Drawing;
 using OriginalCircuit.AltiumSharp.Records;
 using System.ComponentModel;
+using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using System.Windows.Forms;
+using System.Xml.Serialization;
 using TracingSystem.Application.Common.Abstractions;
 using TracingSystem.Application.Common.Algorithms;
 using TracingSystem.Application.Controls;
@@ -98,22 +101,49 @@ namespace TracingSystem
                         TracedConfiguration();
                         break;
                     }
+                case ProjectState.Bundled:
+                    {
+                        BundledConfiguration();
+                        break;
+                    }
             }
         }
 
         public void OnProjectChanged()
         {
-            //очищаетс€ toolStrip дл€ выбора pcb
-            toolStripChoosePcb.Items.Clear();
-            toolStripChoosePcb.Text = "¬ыбрать плату";
+            if (_project.Project is null)
+            {
+                toolStripChoosePcb.Items.Clear();
+                toolStripChoosePcb.Text = "¬ыбрать плату";
+            }
             //если выбран проект в toolStrip добавл€ютс€ платы дл€ выбора
             if (_project.Project is null || _project.Project.Pcbs is null) return;
-            foreach (var pcb in _project.Project.Pcbs)
-                toolStripChoosePcb.Items.Add(pcb.Name);
+
+            if(toolStripChoosePcb.Items.Count == 0)
+                foreach (var pcb in _project.Project.Pcbs)
+                    toolStripChoosePcb.Items.Add(pcb.Name);
+            //очищаетс€ выбранное расслоение
+            _project.SelectedBundle = null;
+
+            //если есть расслоение по€вл€етс€ окно выбора расслоени€
+            if (_project.Project.BundleResults != null)
+            {
+                toolStripChooseBundle.Visible = true;
+                toolStripChooseBundle.Text = "¬ыбор расслоени€";
+                toolStripChooseBundle.Items.Add("Ѕез расслоени€");
+                for (int i = 0; i < _project.Project.BundleResults.Count; i++)
+                    toolStripChooseBundle.Items.Add($"–асслоение {i + 1}");
+            }
+            else
+            {
+                toolStripChooseBundle.Items.Clear();
+                toolStripChooseBundle.Visible = false;
+            }
         }
 
         private void StartupConfiguration()
         {
+            toolStripChooseBundle.Visible = false;
             createProjectMenu.Enabled = true;
             openProjectMenu.Enabled = true;
             closeProgramProjectMenu.Enabled = true;
@@ -123,18 +153,16 @@ namespace TracingSystem
             removeProjectMenu.Enabled = true;
             pcbDetailsMenu.Enabled = false;
             addElementMenu.Enabled = false;
-            addTraceMenu.Enabled = false;
             removeElementMenu.Enabled = false;
-            removeTraceMenu.Enabled = false;
-            addLayerMenu.Enabled = false;
             runBundleMenu.Enabled = false;
             runTraceMenu.Enabled = false;
-            settingsMenu.Enabled = false;
+            traceSettingsMenu.Enabled = false;
             changeProjectNameMenu.Enabled = false;
             openPcbLib.Enabled = false;
             addPcbToolStripMenuItem.Enabled = false;
             deletePcbToolStripMenuItem.Enabled = false;
             changePcbNameToolStripMenuItem.Enabled = false;
+            bundleSettingsMenu.Enabled = false;
         }
 
         private void OpenedProjectConfiguration()
@@ -148,18 +176,16 @@ namespace TracingSystem
             removeProjectMenu.Enabled = true;
             pcbDetailsMenu.Enabled = true;
             addElementMenu.Enabled = false;
-            addTraceMenu.Enabled = false;
             removeElementMenu.Enabled = false;
-            removeTraceMenu.Enabled = false;
-            addLayerMenu.Enabled = true;
             runBundleMenu.Enabled = false;
             runTraceMenu.Enabled = false;
-            settingsMenu.Enabled = false;
+            traceSettingsMenu.Enabled = false;
             changeProjectNameMenu.Enabled = true;
             openPcbLib.Enabled = true;
             addPcbToolStripMenuItem.Enabled = true;
             deletePcbToolStripMenuItem.Enabled = true;
             changePcbNameToolStripMenuItem.Enabled = true;
+            bundleSettingsMenu.Enabled = false;
         }
 
         private void ConfiguredDataConfiguration()
@@ -173,15 +199,13 @@ namespace TracingSystem
             removeProjectMenu.Enabled = true;
             pcbDetailsMenu.Enabled = true;
             addElementMenu.Enabled = true;
-            addTraceMenu.Enabled = true;
             removeElementMenu.Enabled = true;
-            removeTraceMenu.Enabled = true;
-            addLayerMenu.Enabled = true;
             runBundleMenu.Enabled = false;
             runTraceMenu.Enabled = false;
-            settingsMenu.Enabled = true;
+            traceSettingsMenu.Enabled = true;
             changeProjectNameMenu.Enabled = true;
             openPcbLib.Enabled = true;
+            bundleSettingsMenu.Enabled = false;
         }
 
         private void ConfiguredAlgorithmConfiguration()
@@ -195,15 +219,13 @@ namespace TracingSystem
             removeProjectMenu.Enabled = true;
             pcbDetailsMenu.Enabled = true;
             addElementMenu.Enabled = true;
-            addTraceMenu.Enabled = true;
             removeElementMenu.Enabled = true;
-            removeTraceMenu.Enabled = true;
-            addLayerMenu.Enabled = true;
             runBundleMenu.Enabled = false;
             runTraceMenu.Enabled = true;
-            settingsMenu.Enabled = true;
+            traceSettingsMenu.Enabled = true;
             changeProjectNameMenu.Enabled = true;
             openPcbLib.Enabled = true;
+            bundleSettingsMenu.Enabled = false;
         }
 
         private void TracedConfiguration()
@@ -217,15 +239,33 @@ namespace TracingSystem
             removeProjectMenu.Enabled = true;
             pcbDetailsMenu.Enabled = true;
             addElementMenu.Enabled = true;
-            addTraceMenu.Enabled = true;
             removeElementMenu.Enabled = true;
-            removeTraceMenu.Enabled = true;
-            addLayerMenu.Enabled = true;
             runBundleMenu.Enabled = true;
             runTraceMenu.Enabled = true;
-            settingsMenu.Enabled = true;
+            traceSettingsMenu.Enabled = true;
             changeProjectNameMenu.Enabled = true;
             openPcbLib.Enabled = true;
+            bundleSettingsMenu.Enabled = true;
+        }
+
+        private void BundledConfiguration()
+        {
+            createProjectMenu.Enabled = true;
+            openProjectMenu.Enabled = true;
+            closeProgramProjectMenu.Enabled = true;
+            closeProjectMenu.Enabled = true;
+            saveProjectMenu.Enabled = true;
+            saveAsProjectMenu.Enabled = true;
+            removeProjectMenu.Enabled = true;
+            pcbDetailsMenu.Enabled = true;
+            addElementMenu.Enabled = true;
+            removeElementMenu.Enabled = true;
+            runBundleMenu.Enabled = true;
+            runTraceMenu.Enabled = true;
+            traceSettingsMenu.Enabled = true;
+            changeProjectNameMenu.Enabled = true;
+            openPcbLib.Enabled = true;
+            bundleSettingsMenu.Enabled = true;
         }
 
         private void workSpace_MouseMove(object sender, MouseEventArgs e)
@@ -262,6 +302,7 @@ namespace TracingSystem
                 {
                     _dbContext.ChangeTracker.Clear();
                 }
+
                 _project.ChangeProject(null, ProjectState.Startup);
             }
         }
@@ -307,6 +348,7 @@ namespace TracingSystem
         private async void closeProjectMenu_Click(object sender, EventArgs e)
         {
             await AskToSaveProjectAsync();
+
             _project.ChangeProject(null, ProjectState.Startup);
 
             workSpace.Invalidate();
@@ -352,13 +394,20 @@ namespace TracingSystem
             var pcbInfoForm = new PcbInfoForm();
             if (pcbInfoForm.ShowDialog() == DialogResult.OK)
             {
+                var pcb = _project?.Project?.Pcbs
+                ?.FirstOrDefault(pcb => toolStripChoosePcb.Text == pcb.Name);
+                if (pcb == null) return;
+                pcb.Width = pcbInfoForm.PcbWidth;
+                pcb.Height = pcbInfoForm.PcbHeight;
+                pcb.TraceWidth = pcbInfoForm.TraceWidth;
+                pcb.TracePadding = pcbInfoForm.TracePadding;
                 _project.ChangeProject(_project.Project, ProjectState.ConfiguredData);
             }
         }
 
-        private void settingsMenu_Click(object sender, EventArgs e)
+        private void traceSettingsMenu_Click(object sender, EventArgs e)
         {
-            var algorithmDetailsForm = new AlgorithmDetailsForm();
+            var algorithmDetailsForm = new TraceSettingsForm(_project);
             algorithmDetailsForm.ShowDialog();
             _project.ChangeProject(_project.Project, ProjectState.ConfiguredAlgorithm);
         }
@@ -426,17 +475,39 @@ namespace TracingSystem
                 }
             }
 
-            if (traces is null) return;
-            var pen = new Pen(Color.Red, 3);
-            for (int i = 0; i < traces.Count; i++)
+            if (traces is not null && _project.SelectedBundle is null)
             {
-                var coords = traces[i]?.DirectionChangingCoords?.ToList();
-                if (coords is null) continue;
-                for (int j = 0; j < coords.Count - 1; j++)
+                var pen = new Pen(Color.Red, 3);
+                for (int i = 0; i < traces.Count; i++)
                 {
-                    var fromPoint = coords[j].GetPointF;
-                    var toPoint = coords[j + 1].GetPointF;
-                    g.DrawLine(pen, fromPoint, toPoint);
+                    var coords = traces[i]?.DirectionChangingCoords?.ToList();
+                    if (coords is null) continue;
+                    for (int j = 0; j < coords.Count - 1; j++)
+                    {
+                        var fromPoint = coords[j].GetPointF;
+                        var toPoint = coords[j + 1].GetPointF;
+                        g.DrawLine(pen, fromPoint, toPoint);
+                    }
+                }
+            }
+
+            if (traces is not null && _project.SelectedBundle is not null)
+            {
+                var pen = new Pen(Color.Red, 3);
+                foreach (var colorWithTraces in _project.SelectedBundle)
+                {
+                    foreach (var trace in colorWithTraces.Value)
+                    {
+                        var coords = trace?.DirectionChangingCoords?.ToList();
+                        if (coords is null) continue;
+                        for (int j = 0; j < coords.Count - 1; j++)
+                        {
+                            var fromPoint = coords[j].GetPointF;
+                            var toPoint = coords[j + 1].GetPointF;
+                            pen.Color = Color.FromArgb(colorWithTraces.Key);
+                            g.DrawLine(pen, fromPoint, toPoint);
+                        }
+                    }
                 }
             }
         }
@@ -747,6 +818,7 @@ namespace TracingSystem
                 PadsConnections = new List<PadsConnection>()
 
             });
+            toolStripChoosePcb.Items.Add(newPcbName);
             _project.PerformProjectChangeAction();
         }
 
@@ -784,16 +856,12 @@ namespace TracingSystem
             if (selectedPcb is "¬ыбрать плату")
             {
                 addElementMenu.Enabled = false;
-                addTraceMenu.Enabled = false;
                 removeElementMenu.Enabled = false;
-                removeTraceMenu.Enabled = false;
             }
             else
             {
                 addElementMenu.Enabled = true;
-                addTraceMenu.Enabled = true;
                 removeElementMenu.Enabled = true;
-                removeTraceMenu.Enabled = true;
 
                 //если есть трассы, то есть трассировка уже сделана, не добавл€ем элементы, которые можно двигать, вместо этого добавитс€ статична€ картинка
                 var traces = _project?.Project?.Pcbs
@@ -835,7 +903,10 @@ namespace TracingSystem
 
         private async void runTraceMenu_Click(object sender, EventArgs e)
         {
-            var pcbMatrix = PreparePcbMatrix(3, 11);
+            var currentPcb = _project?.Project?.Pcbs?.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text);
+            if (currentPcb == null) { MessageBox.Show("¬ыберите печатную плату!", "ќшибка"); return; }
+
+            var pcbMatrix = PreparePcbMatrix(currentPcb.TraceWidth, currentPcb.TracePadding);
             //var pcbMatrix = new int[,]
             //{
             //    { 0, 0, -3, 0, 0, 0, },
@@ -845,16 +916,17 @@ namespace TracingSystem
             //    { 0, 0, 0, 0, 0, 0, },
             //    { 0, 0, -3, 0, 0, 0, },
             //};
-            var tracingAlgorithm = new Tracing(ObjectiveFunction.MinimalLayerCount, TracePriority.Horizontal);
-            var currentPcb = _project?.Project?.Pcbs?.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text);
+            var tracingAlgorithm = new Tracing(_project.ObjectiveFunction, _project.TracePriority);
             var traces = await tracingAlgorithm.RunAsync(pcbMatrix);
-            ScaleTracesCoords(traces, currentPcb.PadsConnections, 3, 11);
+            ScaleTracesCoords(traces, currentPcb.PadsConnections, currentPcb.TraceWidth, currentPcb.TracePadding);
 
             currentPcb.Layers.First().Traces = traces.ToList();
             _project.ChangeProject(_project.Project, ProjectState.Traced);
 
             //удал€ем все элементы, больше их нельз€ двигать
             workSpace.Controls.Clear();
+
+            workSpace.Invalidate();
         }
 
         private void ScaleTracesCoords(IEnumerable<Trace> traces, IEnumerable<PadsConnection> connections, int traceWidthInPixels, int padding)
@@ -937,23 +1009,6 @@ namespace TracingSystem
             return false;
         }
 
-        private Graph CreateGraph()
-        {
-            var connections = _project.Project.Pcbs.FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text).PadsConnections.ToList();
-            var graph = new Graph(connections.Count);
-            for (int i = 0; i < connections.Count; i++)
-            {
-                var connection = connections[i];
-                var padFromX = connection.PadFrom.Element.LocationX + (int)Math.Round(connection.PadFrom.CenterX);
-                var padFromY = connection.PadFrom.Element.LocationY + (int)Math.Round(connection.PadFrom.CenterY);
-                var padToX = connection.PadTo.Element.LocationX + (int)Math.Round(connection.PadTo.CenterX);
-                var padToY = connection.PadTo.Element.LocationY + (int)Math.Round(connection.PadTo.CenterY);
-                graph[i].Coordinates.Add(new Point(padFromX, padFromY));
-                graph[i].Coordinates.Add(new Point(padToX, padToY));
-            }
-            return graph;
-        }
-
         //возвращает матрицу меньшую в (ширина трассы + 2 отступа) раз
         private int[,] PreparePcbMatrix(int traceWidthInPixels, int padding)
         {
@@ -1024,10 +1079,6 @@ namespace TracingSystem
                     //если в этом квадрате есть начало или конец трассы котора€ обозначаетс€ цифровой меньшей -1
                     if (matrix[i, j] < -1)
                     {
-                        if (matrix[i, j] == -2)
-                        {
-
-                        }
                         value = matrix[i, j];
                         return true;
                     }
@@ -1045,7 +1096,8 @@ namespace TracingSystem
                 .SelectMany(layer => layer.Traces)
                 .ToList();
 
-            var graph = new Graph(traces.Count());
+            if (_graph == null)
+                _graph = new Graph(traces.Count);
 
             //находим пересекающиес€ трассы
             for (int i = 0; i < traces.Count() - 1; i++)
@@ -1055,14 +1107,43 @@ namespace TracingSystem
                 {
                     var anotherLine = traces[j].DirectionChangingCoords.Select(tracePoint => tracePoint.GetPointF).ToList();
                     if (AreLinesIntersecting(currentLine, anotherLine))
-                        graph.Connect(i, j);
+                        _graph.Connect(i, j);
                 }
             }
 
-            var veismanAlgorithm = new VeismanAlgorithm(graph);
+            var veismanAlgorithm = new VeismanAlgorithm(_graph);
             var result = await veismanAlgorithm.RunAsync();
-            //создать класс результат расслоени€, он содержит список Dictionary<Color,Trace>
+            var rnd = new Random();
+
+            _project.Project.BundleResults = new List<Dictionary<int, List<Trace>>>();
+
+            //создаем цвета дл€ каждого сло€
+            var colors = new List<int>();
+            for (int j = 0; j < result[0].Count; j++)
+                colors.Add(Color.FromArgb(rnd.Next(255), rnd.Next(255), rnd.Next(255)).ToArgb());
+
+            //проходимс€ по всем результатам трассировки
+            for (int i = 0; i < result.Length; i++)
+            {
+                _project.Project.BundleResults.Add(new Dictionary<int, List<Trace>>());
+
+                //проходимс€ по конкретному результату
+                for (int j = 0; j < result[i].Count; j++)
+                {
+                    var color = colors[j];
+                    var nodes = result[i][j];
+                    var sameColorTraces = nodes.Select(node => traces[node.NodeNumber]).ToList();
+                    _project.Project.BundleResults[i].Add(color, sameColorTraces);
+                }
+            }
+            _project.Project.BundleResultsJson = JsonSerializer.Serialize(_project.Project.BundleResults);
+
+            _project.ChangeProject(_project.Project, ProjectState.Bundled);
+
+            workSpace.Invalidate();
         }
+        // класс дл€ сохранени€ цвета в бд
+
 
         public static bool AreLinesIntersecting(List<PointF> line1, List<PointF> line2)
         {
@@ -1120,6 +1201,61 @@ namespace TracingSystem
         {
             return Math.Min(p1.X, p2.X) <= p3.X && p3.X <= Math.Max(p1.X, p2.X) &&
                    Math.Min(p1.Y, p2.Y) <= p3.Y && p3.Y <= Math.Max(p1.Y, p2.Y);
+        }
+
+        private void toolStripChooseBundle_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var bundleNumber = toolStripChooseBundle.SelectedIndex - 1;
+            if (bundleNumber == -1)
+                _project.SelectedBundle = null;
+            else
+                _project.SelectedBundle = _project.Project.BundleResults[bundleNumber];
+
+            workSpace.Invalidate();
+        }
+
+        private Graph? _graph;
+        private void bundleSettingsMenu_Click(object sender, EventArgs e)
+        {
+            var currentPcb = _project.Project.Pcbs
+                .FirstOrDefault(pcb => pcb.Name == toolStripChoosePcb.Text);
+            if (currentPcb == null) { MessageBox.Show("¬ыберите печатную плату!", "ќшибка!"); return; }
+            var traces = currentPcb
+                .Layers
+                .SelectMany(layer => layer.Traces)
+                .ToList();
+            if (traces == null) { MessageBox.Show("¬ыполните трассировку!", "ќшибка!"); return; }
+            var bundleSettingsForm = new BundleSettingsForm(traces, currentPcb.TraceWidth, this);
+            bundleSettingsForm.Show(this);
+            bundleSettingsForm.FormClosed += (sender, args) =>
+            {
+                var tracesToBeInOneLayer = bundleSettingsForm.TracesToBeInOneLayer;
+                var tracesToBeInDifferentLayers = bundleSettingsForm.TracesToBeInDifferentLayers;
+                _graph = new Graph(traces.Count);
+
+                //соедин€ем вершины трасс которые должны быть на одном слое со всеми остальными 
+                for (int i = 0; i < tracesToBeInOneLayer.Count; i++)
+                {
+                    for (int j = 0; j < tracesToBeInOneLayer[i].Count; j++)
+                    {
+                        for (int k = 0; k < traces.Count; k++)
+                        {
+                            if (!tracesToBeInOneLayer[i].Contains(k))
+                                _graph.Connect(tracesToBeInOneLayer[i][j], k);
+                        }
+                    }
+                }
+
+                //соедин€ем вершины трасс которые должны быть на разных сло€х между собой
+                for (int i = 0; i < tracesToBeInDifferentLayers.Count; i++)
+                {
+                    for (int j = 0; j < tracesToBeInDifferentLayers[i].Count - 1; j++)
+                    {
+                        for (int k = j + 1; k < tracesToBeInDifferentLayers[i].Count; k++)
+                            _graph.Connect(tracesToBeInDifferentLayers[i][j], tracesToBeInDifferentLayers[i][k]);
+                    }
+                }
+            };
         }
     }
 }

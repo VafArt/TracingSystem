@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using TracingSystem.Application.Common.Abstractions;
@@ -67,6 +68,9 @@ namespace TracingSystem.Application.Projects.Queries.GetProjectByName
                 }
                 mem.Dispose();
             }
+            if(project.BundleResultsJson != null)
+                project.BundleResults = JsonSerializer.Deserialize<List<Dictionary<int,List<Trace>>>>(project.BundleResultsJson);
+
 
             return project;
         }

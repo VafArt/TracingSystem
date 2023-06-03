@@ -4,6 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TracingSystem.Application.Common.Algorithms;
 using TracingSystem.Application.Controls;
 using TracingSystem.Domain;
 using TracingSystem.Domain.Shared;
@@ -14,15 +15,17 @@ namespace TracingSystem.Application.Services
     {
         public Project? Project { get; }
 
-        //public int PcbWidth { get; set; }
+        public ObjectiveFunction ObjectiveFunction { get; set; }
 
-        //public int PcbHeight { get; set; }
+        public TracePriority TracePriority { get; set; }
 
         public string Name { get; }
 
         public ProjectState State { get; }
 
         public Element? SelectedElement { get; set; }
+
+        public Dictionary<int, List<Trace>>? SelectedBundle { get; set; }
 
         public Pad? SelectedPad { get; set; }
 

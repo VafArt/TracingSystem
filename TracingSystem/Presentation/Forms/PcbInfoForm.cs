@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using TracingSystem.Application.Services;
 
 namespace TracingSystem
 {
@@ -16,6 +17,10 @@ namespace TracingSystem
 
         public int PcbHeight { get; set; }
 
+        public int TraceWidth { get; set; } = 3;
+
+        public int TracePadding { get; set; } = 11;
+
         public PcbInfoForm()
         {
             InitializeComponent();
@@ -23,11 +28,16 @@ namespace TracingSystem
 
         private void button1_Click(object sender, EventArgs e)
         {
-            double.TryParse(textBoxWidth.Text, out double width);
-            double.TryParse(textBoxHeight.Text, out double height);
-            if (width == 0 || height == 0) { MessageBox.Show("Невалидные данные!", "Ошибка!"); return; }
-            PcbHeight = (int)Math.Round(height);
-            PcbWidth = (int)Math.Round(width);
+            double.TryParse(textBoxPcbWidth.Text, out double pcbWidth);
+            double.TryParse(textBoxPcbHeight.Text, out double pcbHeight);
+            double.TryParse(textBoxTraceWidth.Text, out double traceWidth);
+            double.TryParse(textBoxTracePadding.Text, out double tracePadding);
+
+            if (pcbWidth == 0 || pcbHeight == 0 || traceWidth == 0 || tracePadding == 0) { MessageBox.Show("Невалидные данные!", "Ошибка!"); return; }
+            PcbHeight = (int)Math.Round(pcbHeight / 25.4 * DeviceDpi);
+            PcbWidth = (int)Math.Round(pcbWidth / 25.4 * DeviceDpi);
+
+
             DialogResult = DialogResult.OK;
             Close();
         }

@@ -15,6 +15,8 @@ namespace TracingSystem.Domain
 
         public int Number { get; set; }
 
+        public int ArgbColor { get; set; }
+
         public ICollection<Element> Elements { get; set; }
 
         public ICollection<Trace>? Traces { get; set; }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,6 +22,11 @@ namespace TracingSystem.Domain
         public ICollection<Pcb>? Pcbs { get; set; }
 
         public string? PossibleElementNamesJson { get; set; }
+
+        public string? BundleResultsJson { get; set; }
+
+        [NotMapped]
+        public List<Dictionary<int, List<Trace>>>? BundleResults { get; set; }
 
     }
 }

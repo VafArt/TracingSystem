@@ -36,6 +36,10 @@ namespace TracingSystem.Application.Common.Algorithms
         public static Edge Connect(Node node1, Node node2, Graph graph)
         {
             if (!graph.Nodes.Contains(node1) || !graph.Nodes.Contains(node2)) throw new ArgumentException();
+
+            var edge1 = graph.Edges.Where(edge => (edge.From.NodeNumber == node1.NodeNumber && edge.To.NodeNumber == node2.NodeNumber) || (edge.From.NodeNumber == node2.NodeNumber && edge.To.NodeNumber == node1.NodeNumber));
+            if (edge1.Count() != 0) return new Edge(node1, node2);
+
             var edge = new Edge(node1, node2);
             node1.edges.Add(edge);
             node2.edges.Add(edge);

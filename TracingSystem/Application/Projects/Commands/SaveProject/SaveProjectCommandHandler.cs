@@ -41,6 +41,7 @@ namespace TracingSystem.Application.Projects.Commands.SaveProject
             project.Name = request.Project.Name;
             project.State = request.Project.State;
             project.Pcbs = request.Project.Pcbs;
+            project.BundleResultsJson = request.Project.BundleResultsJson;
             await _dbContext.SaveChangesAsync(cancellationToken);
             _dbContext.ChangeTracker.Clear();
             return Result.Success();

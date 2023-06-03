@@ -19,6 +19,10 @@ namespace TracingSystem.Domain
 
         public int Height { get; set; }
 
+        public int TraceWidth { get; set; }
+
+        public int TracePadding { get; set; }
+
         public ICollection<PadsConnection>? PadsConnections { get; set; }
 
         public ICollection<Layer>? Layers { get; set; }

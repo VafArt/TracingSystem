@@ -13,6 +13,7 @@ namespace TracingSystem.Domain.Shared
         //PcbSelected,//можно добавлять/удалять элементы/трассы
         ConfiguredData,//можно настроить алгоритм
         ConfiguredAlgorithm,//можно трассировать
-        Traced//можно расслаивать
+        Traced,//можно расслаивать
+        Bundled
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TracingSystem.Application.Common.Algorithms;
 using TracingSystem.Application.Controls;
 using TracingSystem.Domain;
 using TracingSystem.Domain.Shared;
@@ -13,10 +14,9 @@ namespace TracingSystem.Application.Services
     {
         public Project? Project { get; private set; }
 
-        //public int PcbWidth { get; set; }
+        public ObjectiveFunction ObjectiveFunction { get; set; }
 
-        //public int PcbHeight { get; set; }
-
+        public TracePriority TracePriority { get; set; }
 
         public event Action? NameChanged;
 
@@ -27,6 +27,8 @@ namespace TracingSystem.Application.Services
         public event Action? SelectedElementChanged;
 
         public event Action? SelectedPadChanged;
+
+        public Dictionary<int, List<Trace>>? SelectedBundle { get; set; }
 
         private Pad? selectedPad;
         public Pad? SelectedPad
