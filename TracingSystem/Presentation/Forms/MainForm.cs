@@ -407,6 +407,7 @@ namespace TracingSystem
                 pcb.TracePadding = pcbInfoForm.TracePadding;
                 _project.ChangeProject(_project.Project, ProjectState.ConfiguredData);
             }
+            workSpace.Invalidate();
         }
 
         private void traceSettingsMenu_Click(object sender, EventArgs e)
@@ -439,14 +440,20 @@ namespace TracingSystem
                 }
             }
 
-            var padsConnections = _project?.Project?.Pcbs
-                ?.FirstOrDefault(pcb => toolStripChoosePcb.Text == pcb.Name)
+            var currentPcb = _project?.Project?.Pcbs
+                ?.FirstOrDefault(pcb => toolStripChoosePcb.Text == pcb.Name);
+
+            var padsConnections = currentPcb
                 ?.PadsConnections;
 
-            var traces = _project?.Project?.Pcbs
-                ?.FirstOrDefault(pcb => toolStripChoosePcb.Text == pcb.Name)
+            var traces = currentPcb
                 ?.Layers
                 ?.SelectMany(layer => layer?.Traces).ToList();
+
+            if (currentPcb != null)
+            {
+                g.DrawRectangle(new Pen(Color.Red, 3), 1, 1, currentPcb.Width * 10, currentPcb.Height * 10); //каждая точка на экране через 1 см, * 10 чтобы это обозначало как 1 мм
+            }
 
             if (padsConnections != null && traces?.Count == 0)
             {

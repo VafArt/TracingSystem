@@ -48,6 +48,7 @@
             addPcbToolStripMenuItem = new ToolStripMenuItem();
             deletePcbToolStripMenuItem = new ToolStripMenuItem();
             changePcbNameToolStripMenuItem = new ToolStripMenuItem();
+            toolStripRecomendationsMenu = new ToolStripMenuItem();
             runMenu = new ToolStripMenuItem();
             runTraceMenu = new ToolStripMenuItem();
             runBundleMenu = new ToolStripMenuItem();
@@ -69,7 +70,6 @@
             progressBarStatus = new ToolStripProgressBar();
             projectNameStatus = new ToolStripStatusLabel();
             workSpace = new PictureBox();
-            toolStripRecomendationsMenu = new ToolStripMenuItem();
             menuStrip1.SuspendLayout();
             toolStrip.SuspendLayout();
             status.SuspendLayout();
@@ -97,49 +97,49 @@
             // createProjectMenu
             // 
             createProjectMenu.Name = "createProjectMenu";
-            createProjectMenu.Size = new Size(180, 22);
+            createProjectMenu.Size = new Size(163, 22);
             createProjectMenu.Text = "Создать...";
             createProjectMenu.Click += createProjectMenu_Click;
             // 
             // openProjectMenu
             // 
             openProjectMenu.Name = "openProjectMenu";
-            openProjectMenu.Size = new Size(180, 22);
+            openProjectMenu.Size = new Size(163, 22);
             openProjectMenu.Text = "Открыть...";
             openProjectMenu.Click += openProjectMenu_Click;
             // 
             // closeProjectMenu
             // 
             closeProjectMenu.Name = "closeProjectMenu";
-            closeProjectMenu.Size = new Size(180, 22);
+            closeProjectMenu.Size = new Size(163, 22);
             closeProjectMenu.Text = "Закрыть";
             closeProjectMenu.Click += closeProjectMenu_Click;
             // 
             // saveProjectMenu
             // 
             saveProjectMenu.Name = "saveProjectMenu";
-            saveProjectMenu.Size = new Size(180, 22);
+            saveProjectMenu.Size = new Size(163, 22);
             saveProjectMenu.Text = "Сохранить";
             saveProjectMenu.Click += saveProjectMenu_Click;
             // 
             // saveAsProjectMenu
             // 
             saveAsProjectMenu.Name = "saveAsProjectMenu";
-            saveAsProjectMenu.Size = new Size(180, 22);
+            saveAsProjectMenu.Size = new Size(163, 22);
             saveAsProjectMenu.Text = "Сохранить как...";
             saveAsProjectMenu.Click += saveAsProjectMenu_Click;
             // 
             // removeProjectMenu
             // 
             removeProjectMenu.Name = "removeProjectMenu";
-            removeProjectMenu.Size = new Size(180, 22);
+            removeProjectMenu.Size = new Size(163, 22);
             removeProjectMenu.Text = "Удалить";
             removeProjectMenu.Click += removeProjectMenu_Click;
             // 
             // closeProgramProjectMenu
             // 
             closeProgramProjectMenu.Name = "closeProgramProjectMenu";
-            closeProgramProjectMenu.Size = new Size(180, 22);
+            closeProgramProjectMenu.Size = new Size(163, 22);
             closeProgramProjectMenu.Text = "Выход";
             closeProgramProjectMenu.Click += closeProgramProjectMenu_Click;
             // 
@@ -212,6 +212,13 @@
             changePcbNameToolStripMenuItem.Size = new Size(228, 22);
             changePcbNameToolStripMenuItem.Text = "Изменить название платы";
             changePcbNameToolStripMenuItem.Click += changePcbNameToolStripMenuItem_Click;
+            // 
+            // toolStripRecomendationsMenu
+            // 
+            toolStripRecomendationsMenu.Name = "toolStripRecomendationsMenu";
+            toolStripRecomendationsMenu.Size = new Size(100, 23);
+            toolStripRecomendationsMenu.Text = "Рекомендации";
+            toolStripRecomendationsMenu.Click += toolStripRecomendationsMenu_Click;
             // 
             // runMenu
             // 
@@ -381,13 +388,6 @@
             workSpace.TabStop = false;
             workSpace.Paint += workSpace_Paint;
             workSpace.MouseMove += workSpace_MouseMove;
-            // 
-            // toolStripRecomendationsMenu
-            // 
-            toolStripRecomendationsMenu.Name = "toolStripRecomendationsMenu";
-            toolStripRecomendationsMenu.Size = new Size(100, 23);
-            toolStripRecomendationsMenu.Text = "Рекомендации";
-            toolStripRecomendationsMenu.Click += toolStripRecomendationsMenu_Click;
             // 
             // MainForm
             // 
