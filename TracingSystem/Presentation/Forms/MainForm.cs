@@ -274,8 +274,8 @@ namespace TracingSystem
 
         private void workSpace_MouseMove(object sender, MouseEventArgs e)
         {
-            xStatus.Text = $"X: {e.X}";
-            yStatus.Text = $"Y: {e.Y}";
+            xStatus.Text = $"X: {Math.Round(e.X / (DeviceDpi * 0.393701), 3)} мм.";
+            yStatus.Text = $"Y: {Math.Round(e.Y / (DeviceDpi * 0.393701), 3)} мм.";
             AlignStatusStrip();
         }
 
@@ -840,6 +840,11 @@ namespace TracingSystem
             var pcbToDelete = _project.Project.Pcbs.FirstOrDefault(pcb => pcb.Name == pcbToDeleteName);
             if (pcbToDelete == null) { MessageBox.Show(DomainErrors.Pcb.PcbNotFound.Message, "Ошибка!"); return; }
             _project.Project.Pcbs.Remove(pcbToDelete);
+
+            var index = toolStripChoosePcb.Items.IndexOf(pcbToDeleteName);
+            toolStripChoosePcb.Items.RemoveAt(index);
+            toolStripChoosePcb.Text = "";
+
             _project.PerformProjectChangeAction();
         }
 
@@ -854,6 +859,10 @@ namespace TracingSystem
             if (newName is null) { MessageBox.Show("Некорректный ввод!", "Ошибка!"); return; }
 
             pcbToUpdate.Name = newName;
+
+            var index = toolStripChoosePcb.Items.IndexOf(pcbToUpdateName);
+            toolStripChoosePcb.Items[index] = newName;
+
             _project.PerformProjectChangeAction();
         }
 
@@ -880,11 +889,12 @@ namespace TracingSystem
                     ?.Layers?.SelectMany(layer => layer?.Traces);
                 if (traces == null || traces?.Count() == 0)
                 {
-                    var elements = _project.Project.Pcbs
-                        .FirstOrDefault(pcb => pcb.Name == selectedPcb)
-                        .Layers.SelectMany(layer => layer.Elements);
-                    foreach (var element in elements)
-                        workSpace.Controls.Add(element.ElementControl);
+                    var elements = _project?.Project?.Pcbs
+                        ?.FirstOrDefault(pcb => pcb.Name == selectedPcb)
+                        ?.Layers?.SelectMany(layer => layer.Elements);
+                    if (elements != null)
+                        foreach (var element in elements)
+                            workSpace.Controls.Add(element.ElementControl);
                 }
             }
             workSpace.Invalidate();
@@ -1282,7 +1292,7 @@ namespace TracingSystem
         };
         private void toolStripRecomendationsMenu_Click(object sender, EventArgs e)
         {
-            var potentialLayersCount = int.Parse(Microsoft.VisualBasic.Interaction.InputBox("Введите количество потенциальных слоев:", "Рекомендации"));
+            int.TryParse(Microsoft.VisualBasic.Interaction.InputBox("Введите количество потенциальных слоев:", "Рекомендации"), out var potentialLayersCount);
             var signalLayersCount = _project.Project.BundleResults[0].Count - potentialLayersCount;
             MessageBox.Show("Структура МПП:\n" + _layerRecomendationTable[signalLayersCount - 1, potentialLayersCount - 1]);
         }

@@ -54,7 +54,6 @@
             runBundleMenu = new ToolStripMenuItem();
             traceSettingsMenu = new ToolStripMenuItem();
             bundleSettingsMenu = new ToolStripMenuItem();
-            toolStripChooseBundle = new ToolStripComboBox();
             toolStrip = new ToolStrip();
             saveTool = new ToolStripButton();
             addElementTool = new ToolStripButton();
@@ -63,6 +62,7 @@
             removeTraceTool = new ToolStripButton();
             runTool = new ToolStripButton();
             toolStripChoosePcb = new ToolStripComboBox();
+            toolStripChooseBundle = new ToolStripComboBox();
             status = new StatusStrip();
             xStatus = new ToolStripStatusLabel();
             yStatus = new ToolStripStatusLabel();
@@ -79,11 +79,11 @@
             // menuStrip1
             // 
             menuStrip1.ImageScalingSize = new Size(32, 32);
-            menuStrip1.Items.AddRange(new ToolStripItem[] { projectMenu, projectDetailsMenu, editMenu, toolStripRecomendationsMenu, runMenu, toolStripChooseBundle });
+            menuStrip1.Items.AddRange(new ToolStripItem[] { projectMenu, projectDetailsMenu, editMenu, toolStripRecomendationsMenu, runMenu });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Padding = new Padding(3, 1, 0, 1);
-            menuStrip1.Size = new Size(827, 25);
+            menuStrip1.Size = new Size(827, 24);
             menuStrip1.TabIndex = 0;
             menuStrip1.Text = "menuStrip1";
             // 
@@ -91,7 +91,7 @@
             // 
             projectMenu.DropDownItems.AddRange(new ToolStripItem[] { createProjectMenu, openProjectMenu, closeProjectMenu, saveProjectMenu, saveAsProjectMenu, removeProjectMenu, closeProgramProjectMenu });
             projectMenu.Name = "projectMenu";
-            projectMenu.Size = new Size(59, 23);
+            projectMenu.Size = new Size(59, 22);
             projectMenu.Text = "Проект";
             // 
             // createProjectMenu
@@ -147,7 +147,7 @@
             // 
             projectDetailsMenu.DropDownItems.AddRange(new ToolStripItem[] { pcbDetailsMenu });
             projectDetailsMenu.Name = "projectDetailsMenu";
-            projectDetailsMenu.Size = new Size(125, 23);
+            projectDetailsMenu.Size = new Size(125, 22);
             projectDetailsMenu.Text = "Проектные данные";
             // 
             // pcbDetailsMenu
@@ -161,7 +161,7 @@
             // 
             editMenu.DropDownItems.AddRange(new ToolStripItem[] { addElementMenu, removeElementMenu, openPcbLib, changeProjectNameMenu, addPcbToolStripMenuItem, deletePcbToolStripMenuItem, changePcbNameToolStripMenuItem });
             editMenu.Name = "editMenu";
-            editMenu.Size = new Size(99, 23);
+            editMenu.Size = new Size(99, 22);
             editMenu.Text = "Редактировать";
             // 
             // addElementMenu
@@ -216,7 +216,7 @@
             // toolStripRecomendationsMenu
             // 
             toolStripRecomendationsMenu.Name = "toolStripRecomendationsMenu";
-            toolStripRecomendationsMenu.Size = new Size(100, 23);
+            toolStripRecomendationsMenu.Size = new Size(100, 22);
             toolStripRecomendationsMenu.Text = "Рекомендации";
             toolStripRecomendationsMenu.Click += toolStripRecomendationsMenu_Click;
             // 
@@ -224,7 +224,7 @@
             // 
             runMenu.DropDownItems.AddRange(new ToolStripItem[] { runTraceMenu, runBundleMenu, traceSettingsMenu, bundleSettingsMenu });
             runMenu.Name = "runMenu";
-            runMenu.Size = new Size(81, 23);
+            runMenu.Size = new Size(81, 22);
             runMenu.Text = "Выполнить";
             // 
             // runTraceMenu
@@ -255,18 +255,11 @@
             bundleSettingsMenu.Text = "Настройка расслоения...";
             bundleSettingsMenu.Click += bundleSettingsMenu_Click;
             // 
-            // toolStripChooseBundle
-            // 
-            toolStripChooseBundle.BackColor = SystemColors.Control;
-            toolStripChooseBundle.Name = "toolStripChooseBundle";
-            toolStripChooseBundle.Size = new Size(130, 23);
-            toolStripChooseBundle.SelectedIndexChanged += toolStripChooseBundle_SelectedIndexChanged;
-            // 
             // toolStrip
             // 
             toolStrip.ImageScalingSize = new Size(32, 32);
-            toolStrip.Items.AddRange(new ToolStripItem[] { saveTool, addElementTool, removeElementTool, addTraceTool, removeTraceTool, runTool, toolStripChoosePcb });
-            toolStrip.Location = new Point(0, 25);
+            toolStrip.Items.AddRange(new ToolStripItem[] { saveTool, addElementTool, removeElementTool, addTraceTool, removeTraceTool, runTool, toolStripChoosePcb, toolStripChooseBundle });
+            toolStrip.Location = new Point(0, 24);
             toolStrip.Name = "toolStrip";
             toolStrip.Size = new Size(827, 39);
             toolStrip.TabIndex = 1;
@@ -332,6 +325,12 @@
             toolStripChoosePcb.Size = new Size(121, 39);
             toolStripChoosePcb.Text = "Выбрать плату";
             toolStripChoosePcb.TextChanged += toolStripChoosePcb_TextChanged;
+            // 
+            // toolStripChooseBundle
+            // 
+            toolStripChooseBundle.Name = "toolStripChooseBundle";
+            toolStripChooseBundle.Size = new Size(121, 39);
+            toolStripChooseBundle.SelectedIndexChanged += toolStripChooseBundle_SelectedIndexChanged;
             // 
             // status
             // 
@@ -453,8 +452,8 @@
         private ToolStripMenuItem addPcbToolStripMenuItem;
         private ToolStripMenuItem deletePcbToolStripMenuItem;
         private ToolStripMenuItem changePcbNameToolStripMenuItem;
-        private ToolStripComboBox toolStripChooseBundle;
         private ToolStripMenuItem bundleSettingsMenu;
         private ToolStripMenuItem toolStripRecomendationsMenu;
+        private ToolStripComboBox toolStripChooseBundle;
     }
 }
