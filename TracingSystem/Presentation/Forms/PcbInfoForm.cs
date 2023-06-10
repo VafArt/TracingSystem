@@ -34,8 +34,8 @@ namespace TracingSystem
             double.TryParse(textBoxTracePadding.Text, out double tracePadding);
 
             if (pcbWidth == 0 || pcbHeight == 0 || traceWidth == 0 || tracePadding == 0) { MessageBox.Show("Невалидные данные!", "Ошибка!"); return; }
-            PcbHeight = (int)Math.Round(pcbHeight / 25.4 * DeviceDpi);
-            PcbWidth = (int)Math.Round(pcbWidth / 25.4 * DeviceDpi);
+            PcbHeight = (int)Math.Round(pcbHeight * 12.5);
+            PcbWidth = (int)Math.Round(pcbWidth * 12.5);
 
 
             DialogResult = DialogResult.OK;

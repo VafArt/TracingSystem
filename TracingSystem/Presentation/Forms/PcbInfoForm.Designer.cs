@@ -37,6 +37,8 @@
             textBoxTracePadding = new TextBox();
             textBoxTraceWidth = new TextBox();
             label4 = new Label();
+            label5 = new Label();
+            textBox1 = new TextBox();
             SuspendLayout();
             // 
             // label1
@@ -69,7 +71,7 @@
             // button1
             // 
             button1.BackColor = SystemColors.Control;
-            button1.Location = new Point(146, 249);
+            button1.Location = new Point(146, 334);
             button1.Margin = new Padding(2, 1, 2, 1);
             button1.Name = "button1";
             button1.Size = new Size(81, 22);
@@ -127,11 +129,32 @@
             label4.Text = "Ширина проводников в мм.";
             label4.TextAlign = ContentAlignment.MiddleCenter;
             // 
+            // label5
+            // 
+            label5.Font = new Font("Segoe UI", 10.125F, FontStyle.Regular, GraphicsUnit.Point);
+            label5.Location = new Point(38, 234);
+            label5.Margin = new Padding(2, 0, 2, 0);
+            label5.Name = "label5";
+            label5.Size = new Size(146, 62);
+            label5.TabIndex = 10;
+            label5.Text = "Размер координатной сетки в мм.";
+            label5.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // textBox1
+            // 
+            textBox1.Location = new Point(219, 256);
+            textBox1.Margin = new Padding(2, 1, 2, 1);
+            textBox1.Name = "textBox1";
+            textBox1.Size = new Size(110, 23);
+            textBox1.TabIndex = 11;
+            // 
             // PcbInfoForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(387, 296);
+            ClientSize = new Size(387, 377);
+            Controls.Add(textBox1);
+            Controls.Add(label5);
             Controls.Add(label3);
             Controls.Add(textBoxTracePadding);
             Controls.Add(textBoxTraceWidth);
@@ -160,5 +183,7 @@
         private TextBox textBoxTracePadding;
         private TextBox textBoxTraceWidth;
         private Label label4;
+        private Label label5;
+        private TextBox textBox1;
     }
 }

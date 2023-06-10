@@ -26,8 +26,6 @@ using TracingSystem.Domain.Errors;
 using TracingSystem.Domain.Shared;
 using TracingSystem.Persistance;
 using TracingSystem.Presentation.Forms;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
-using static TracingSystem.Domain.Errors.DomainErrors;
 using Pcb = TracingSystem.Domain.Pcb;
 
 namespace TracingSystem
@@ -274,8 +272,8 @@ namespace TracingSystem
 
         private void workSpace_MouseMove(object sender, MouseEventArgs e)
         {
-            xStatus.Text = $"X: {Math.Round(e.X / (DeviceDpi * 0.393701), 3)} мм.";
-            yStatus.Text = $"Y: {Math.Round(e.Y / (DeviceDpi * 0.393701), 3)} мм.";
+            xStatus.Text = $"X: {Math.Round(e.X / 12.5, 3)} мм.";
+            yStatus.Text = $"Y: {Math.Round(e.Y / 12.5, 3)} мм.";
             AlignStatusStrip();
         }
 
@@ -429,9 +427,20 @@ namespace TracingSystem
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.HighQuality;
             var workspace = (PictureBox)sender;
-            for (decimal relX = 0; relX < workSpace.Width; relX += (Convert.ToDecimal(0.393701) * workSpace.DeviceDpi))
+            //for (decimal relX = 0; relX < workSpace.Width; relX += (Convert.ToDecimal(0.393701) * workSpace.DeviceDpi))
+            //{
+            //    for (decimal relY = 0; relY < workSpace.Height; relY += (Convert.ToDecimal(0.393701) * workSpace.DeviceDpi))
+            //    {
+            //        var dotWidth = (int)decimal.Round(0.019685m * workspace.DeviceDpi);
+            //        var intRelX = (int)decimal.Round(relX);
+            //        var intRelY = (int)decimal.Round(relY);
+            //        g.FillRectangle(new SolidBrush(Color.Black), new Rectangle(intRelX, intRelY, dotWidth, dotWidth));
+            //    }
+            //}
+
+            for (decimal relX = 0; relX < workSpace.Width; relX += 12.5m)
             {
-                for (decimal relY = 0; relY < workSpace.Height; relY += (Convert.ToDecimal(0.393701) * workSpace.DeviceDpi))
+                for (decimal relY = 0; relY < workSpace.Height; relY += 12.5m)
                 {
                     var dotWidth = (int)decimal.Round(0.019685m * workspace.DeviceDpi);
                     var intRelX = (int)decimal.Round(relX);
@@ -452,7 +461,7 @@ namespace TracingSystem
 
             if (currentPcb != null)
             {
-                g.DrawRectangle(new Pen(Color.Red, 3), 1, 1, currentPcb.Width * 10, currentPcb.Height * 10); //каждая точка на экране через 1 см, * 10 чтобы это обозначало как 1 мм
+                g.DrawRectangle(new Pen(Color.Red, 3), 1, 1, currentPcb.Width, currentPcb.Height); //каждая точка на экране через 1 см, * 10 чтобы это обозначало как 1 мм
             }
 
             if (padsConnections != null && traces?.Count == 0)
@@ -930,12 +939,12 @@ namespace TracingSystem
             var pcbMatrix = PreparePcbMatrix(currentPcb.TraceWidth, currentPcb.TracePadding);
             //var pcbMatrix = new int[,]
             //{
-            //    { 0, 0, -3, 0, 0, 0, },
+            //    { 0, 0, 0, 0, 0, 0, },
+            //    { 0, -3, 0, 0, 0, 0, },
+            //    { 0, 0, 0, 0, 0, 0, },
+            //    { 0, -3, 0, 0, 0, 0, },
             //    { 0, 0, 0, 0, 0, 0, },
             //    { 0, 0, 0, 0, 0, 0, },
-            //    { -4, 0, -2, 0, 0, -4, },
-            //    { 0, 0, 0, 0, 0, 0, },
-            //    { 0, 0, -3, 0, 0, 0, },
             //};
             var tracingAlgorithm = new Tracing(_project.ObjectiveFunction, _project.TracePriority);
             var traces = await tracingAlgorithm.RunAsync(pcbMatrix);
@@ -1000,12 +1009,12 @@ namespace TracingSystem
                     if (clonedCoords[j].X == clonedCoords[j - 1].X && clonedCoords[j].Y != clonedCoords[j - 1].Y)
                     {
                         coordsToScale[j].X = coordsToScale[j - 1].X;
-                        coordsToScale[j].Y = clonedCoords[j - 1].Y * traceWidthWithPadding + traceWidthWithPadding / 2;
+                        coordsToScale[j].Y = clonedCoords[j].Y * traceWidthWithPadding /*+ traceWidthWithPadding / 2*/;
                     }
                     //если поменялась координата X, то Y взять из предыдущего scale значения, а X серединку
                     if (clonedCoords[j].Y == clonedCoords[j - 1].Y && clonedCoords[j].X != clonedCoords[j - 1].X)
                     {
-                        coordsToScale[j].X = clonedCoords[j - 1].X * traceWidthWithPadding + traceWidthWithPadding / 2;
+                        coordsToScale[j].X = clonedCoords[j].X * traceWidthWithPadding /*+ traceWidthWithPadding / 2*/;
                         coordsToScale[j].Y = coordsToScale[j - 1].Y;
                     }
 
@@ -1163,7 +1172,6 @@ namespace TracingSystem
 
             workSpace.Invalidate();
         }
-        // класс для сохранения цвета в бд
 
 
         public static bool AreLinesIntersecting(List<PointF> line1, List<PointF> line2)
@@ -1283,18 +1291,21 @@ namespace TracingSystem
         private string[,] _layerRecomendationTable = new string[,]
         {
             { "CE", "ECE", "", "", "", "", "" },
-            { "CCE", "ECCE\nCE-EC", "", "", "", "", "" },
+            { "CCE", "ECCE", "", "", "", "", "" },
             { "", "CCE-EC", "", "CE-ECE-EC", "", "", ""},
             { "", "CCE-ECC", "","CE-ECCE-EC","","CE-ECE-ECE-EC","" },
-            { "", "", "", "CE-ECCE-ECC\nCCE-ECE-ECC", "", "CE-ECE-ECE-EC\nCE-ECE-ECCE-EC", "" },
-            { "", "", "", "CCE-ECCE-ECC", "", "CE-ECE-ECCE-EC\nCE-ECCE-ECE-ECC\nCCE-ECE-ECE-ECC", "" },
-            { "", "", "", "", "", "CE-ECCE-ECCE-ECC\nCCE-ECE-ECCE-ECC", "" }
+            { "", "", "", "CCE-ECE-ECC", "", "CE-ECE-ECCE-EC", "" },
+            { "", "", "", "CCE-ECCE-ECC", "", "CCE-ECE-ECE-ECC", "" },
+            { "", "", "", "", "", "CCE-ECE-ECCE-ECC", "" }
         };
         private void toolStripRecomendationsMenu_Click(object sender, EventArgs e)
         {
             int.TryParse(Microsoft.VisualBasic.Interaction.InputBox("Введите количество потенциальных слоев:", "Рекомендации"), out var potentialLayersCount);
             var signalLayersCount = _project.Project.BundleResults[0].Count - potentialLayersCount;
-            MessageBox.Show("Структура МПП:\n" + _layerRecomendationTable[signalLayersCount - 1, potentialLayersCount - 1]);
+            var recomendation =_layerRecomendationTable[signalLayersCount - 1, potentialLayersCount - 1];
+            var layerNames = recomendation.Split('-').SelectMany(s => Enumerable.Range(0, s.Length).Select(i => s[i] == 'C' ? $"Сигнальный {i + 1}" : $"Потенциальный {i + 1}")).ToArray();
+            var layerStackForm = new LayerStackForm(layerNames);
+            layerStackForm.ShowDialog();
         }
     }
 }
