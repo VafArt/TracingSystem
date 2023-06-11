@@ -50,7 +50,7 @@
             FormBorderStyle = FormBorderStyle.FixedDialog;
             Margin = new Padding(2, 1, 2, 1);
             Name = "LayerStackForm";
-            Text = "Данные о печатной плате";
+            Text = "Стек слоев";
             ResumeLayout(false);
         }
 

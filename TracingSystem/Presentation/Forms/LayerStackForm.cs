@@ -17,7 +17,7 @@ namespace TracingSystem
         public LayerStackForm(string[] layerNames)
         {
             InitializeComponent();
-            for (int i = layerNames.Length - 1; i >= 0; i--)
+            for (int i = 0; i < layerNames.Length; i++)
             {
                 var label = new Label();
                 label.Text = layerNames[i];

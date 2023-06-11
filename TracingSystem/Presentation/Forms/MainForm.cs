@@ -1303,7 +1303,7 @@ namespace TracingSystem
             int.TryParse(Microsoft.VisualBasic.Interaction.InputBox("Введите количество потенциальных слоев:", "Рекомендации"), out var potentialLayersCount);
             var signalLayersCount = _project.Project.BundleResults[0].Count - potentialLayersCount;
             var recomendation =_layerRecomendationTable[signalLayersCount - 1, potentialLayersCount - 1];
-            var layerNames = recomendation.Split('-').SelectMany(s => Enumerable.Range(0, s.Length).Select(i => s[i] == 'C' ? $"Сигнальный {i + 1}" : $"Потенциальный {i + 1}")).ToArray();
+            var layerNames = recomendation.Split('-').SelectMany(s => Enumerable.Range(0, s.Length).Select(i => s[i] == 'C' ? $"Сигнальный" : $"Потенциальный")).ToArray();
             var layerStackForm = new LayerStackForm(layerNames);
             layerStackForm.ShowDialog();
         }
