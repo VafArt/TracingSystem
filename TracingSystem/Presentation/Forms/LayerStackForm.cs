@@ -13,7 +13,7 @@ namespace TracingSystem
 {
     public partial class LayerStackForm : Form
     {
-
+        //форма показа стека слоев
         public LayerStackForm(string[] layerNames)
         {
             InitializeComponent();

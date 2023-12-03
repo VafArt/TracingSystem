@@ -17,6 +17,7 @@ using TracingSystem.Application.Services;
 
 namespace TracingSystem.Presentation.Forms
 {
+    //класс формы для добавления элементов
     public partial class AddElementForm : Form
     {
         private readonly IMediator Mediator;
@@ -51,7 +52,7 @@ namespace TracingSystem.Presentation.Forms
                 panel.Controls.Add(button);
             }
         }
-
+        //обработчик события нажатия на кнопку добавления элемента
         private async void AddElement_Click(object? sender, EventArgs e)
         {
             var elementCountStr = Microsoft.VisualBasic.Interaction.InputBox("Введите количество элементов", "Добавление элемента");

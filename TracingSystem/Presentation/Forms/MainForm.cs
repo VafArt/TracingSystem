@@ -30,6 +30,7 @@ using Pcb = TracingSystem.Domain.Pcb;
 
 namespace TracingSystem
 {
+    //главная форма программы
     public partial class MainForm : Form
     {
         private readonly ITracingSystemDbContext _dbContext;
@@ -65,6 +66,7 @@ namespace TracingSystem
             toolStrip.ImageScalingSize = DeviceDpi > 150 ? new Size(32, 32) : new Size(18, 18);
         }
 
+        //обработчик изменения состояния проекта
         public void OnStateChanged()
         {
             switch (_project.State)
@@ -107,6 +109,7 @@ namespace TracingSystem
             }
         }
 
+        //Обработчик события изменения проекта
         public void OnProjectChanged()
         {
             if (_project.Project is null)
@@ -141,6 +144,7 @@ namespace TracingSystem
             }
         }
 
+        //конфигурация при запуске программы
         private void StartupConfiguration()
         {
             toolStripChooseBundle.Visible = false;
@@ -167,6 +171,7 @@ namespace TracingSystem
 
         }
 
+        //конфигурация при открытии проекта
         private void OpenedProjectConfiguration()
         {
             createProjectMenu.Enabled = true;
@@ -190,6 +195,7 @@ namespace TracingSystem
             bundleSettingsMenu.Enabled = false;
         }
 
+        //конфигурация при вводе проектных данных
         private void ConfiguredDataConfiguration()
         {
             createProjectMenu.Enabled = true;
@@ -210,6 +216,7 @@ namespace TracingSystem
             bundleSettingsMenu.Enabled = false;
         }
 
+        //конфигурация при настройке алгоритма трассировки
         private void ConfiguredAlgorithmConfiguration()
         {
             createProjectMenu.Enabled = true;
@@ -230,6 +237,7 @@ namespace TracingSystem
             bundleSettingsMenu.Enabled = false;
         }
 
+        //конфигурация при выполнении трассировки
         private void TracedConfiguration()
         {
             createProjectMenu.Enabled = true;
@@ -250,6 +258,7 @@ namespace TracingSystem
             bundleSettingsMenu.Enabled = true;
         }
 
+        //конфигурация при выполнении расслоения
         private void BundledConfiguration()
         {
             createProjectMenu.Enabled = true;
@@ -270,6 +279,7 @@ namespace TracingSystem
             bundleSettingsMenu.Enabled = true;
         }
 
+        //обработчик движения мыши
         private void workSpace_MouseMove(object sender, MouseEventArgs e)
         {
             xStatus.Text = $"X: {Math.Round(e.X / 12.5, 3)} мм.";
@@ -288,6 +298,7 @@ namespace TracingSystem
             AlignStatusStrip();
         }
 
+        //спрашивает пользователя нужно ли сохранить преокт
         private async Task AskToSaveProjectAsync()
         {
             if (_project.State != ProjectState.Startup)
@@ -309,6 +320,7 @@ namespace TracingSystem
             }
         }
 
+        //обработчик события нажатия на кнопку создания проекта
         private async void createProjectMenu_Click(object sender, EventArgs e)
         {
             await AskToSaveProjectAsync();
@@ -427,16 +439,6 @@ namespace TracingSystem
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.HighQuality;
             var workspace = (PictureBox)sender;
-            //for (decimal relX = 0; relX < workSpace.Width; relX += (Convert.ToDecimal(0.393701) * workSpace.DeviceDpi))
-            //{
-            //    for (decimal relY = 0; relY < workSpace.Height; relY += (Convert.ToDecimal(0.393701) * workSpace.DeviceDpi))
-            //    {
-            //        var dotWidth = (int)decimal.Round(0.019685m * workspace.DeviceDpi);
-            //        var intRelX = (int)decimal.Round(relX);
-            //        var intRelY = (int)decimal.Round(relY);
-            //        g.FillRectangle(new SolidBrush(Color.Black), new Rectangle(intRelX, intRelY, dotWidth, dotWidth));
-            //    }
-            //}
 
             for (decimal relX = 0; relX < workSpace.Width; relX += 12.5m)
             {
@@ -461,7 +463,7 @@ namespace TracingSystem
 
             if (currentPcb != null)
             {
-                g.DrawRectangle(new Pen(Color.Red, 3), 1, 1, currentPcb.Width, currentPcb.Height); //каждая точка на экране через 1 см, * 10 чтобы это обозначало как 1 мм
+                g.DrawRectangle(new Pen(Color.Red, 3), 1, 1, currentPcb.Width, currentPcb.Height);
             }
 
             if (padsConnections != null && traces?.Count == 0)
@@ -474,11 +476,6 @@ namespace TracingSystem
                         );
                 }
             }
-
-            //var traces = _project?.Project?.Pcbs
-            //    ?.FirstOrDefault(pcb => toolStripChoosePcb.Text == pcb.Name)
-            //    ?.Layers
-            //    ?.SelectMany(layer => layer?.Traces).ToList();
 
             if (workSpace.Controls.Count == 0)
             {
@@ -616,18 +613,6 @@ namespace TracingSystem
             using (var g = Graphics.FromImage(image))
             {
                 _pcbLibRenderer.Render(g, width, height, true, false);
-                //var pads = component.Primitives.Where(primitive => primitive is PcbPad).Select(pad => pad as PcbPad);
-                //var padsPoints = pads.Select(pad => Tuple.Create(_pcbLibRenderer.ScreenFromWorld(pad.Location.X, pad.Location.Y), pad.Size)).ToList();
-
-                //foreach (var pad in padsPoints)
-                //{
-                //    g.FillEllipse(new SolidBrush(Color.Red),
-                //        pad.Item1.X - (_pcbLibRenderer.ScaleCoord(pad.Item2.X) / 2),
-                //        pad.Item1.Y - (_pcbLibRenderer.ScaleCoord(pad.Item2.Y) / 2),
-                //        _pcbLibRenderer.ScaleCoord(pad.Item2.X),
-                //        _pcbLibRenderer.ScaleCoord(pad.Item2.Y));
-
-                //}
             }
             return image;
         }
@@ -725,10 +710,6 @@ namespace TracingSystem
         {
             if (xRadius <= 0.0 || yRadius <= 0.0)
                 return false;
-            /* This is a more general form of the circle equation
-             *
-             * X^2/a^2 + Y^2/b^2 <= 1
-             */
 
             PointF normalized = new PointF(location.X - center.X,
                                          location.Y - center.Y);
@@ -772,15 +753,9 @@ namespace TracingSystem
             };
             elementControl.Element = elementToAdd;
 
-            //просто так рисуем кружки по падам
             var pads = component.Primitives.Where(primitive => primitive is PcbPad).Select(pad => pad as PcbPad);
-            //var padsPoints = pads.Select(pad => Tuple.Create(_pcbLibRenderer.ScreenFromWorld(pad.Location.X, pad.Location.Y), pad.Size)).ToList();
             foreach (var pad in pads)
             {
-                //elementToAdd.Pads.Add(new Pad(
-                //    pad.Item1.X - (_pcbLibRenderer.ScaleCoord(pad.Item2.X) / 2),
-                //    pad.Item1.Y - (_pcbLibRenderer.ScaleCoord(pad.Item2.Y) / 2)
-                //    ));
                 var centerPoint = _pcbLibRenderer.ScreenFromWorld(pad.Location);
                 var sizeX = _pcbLibRenderer.ScaleCoord(pad.Size.X);
                 var sizeY = _pcbLibRenderer.ScaleCoord(pad.Size.Y);
@@ -937,15 +912,6 @@ namespace TracingSystem
             if (currentPcb == null) { MessageBox.Show("Выберите печатную плату!", "Ошибка"); return; }
 
             var pcbMatrix = PreparePcbMatrix(currentPcb.TraceWidth, currentPcb.TracePadding);
-            //var pcbMatrix = new int[,]
-            //{
-            //    { 0, 0, 0, 0, 0, 0, },
-            //    { 0, -3, 0, 0, 0, 0, },
-            //    { 0, 0, 0, 0, 0, 0, },
-            //    { 0, -3, 0, 0, 0, 0, },
-            //    { 0, 0, 0, 0, 0, 0, },
-            //    { 0, 0, 0, 0, 0, 0, },
-            //};
             var tracingAlgorithm = new Tracing(_project.ObjectiveFunction, _project.TracePriority);
             var traces = await tracingAlgorithm.RunAsync(pcbMatrix);
             ScaleTracesCoords(traces, currentPcb.PadsConnections, currentPcb.TraceWidth, currentPcb.TracePadding);

@@ -11,6 +11,7 @@ using TracingSystem.Application.Services;
 
 namespace TracingSystem
 {
+    //форма для настроект алгоритма трассировки
     public partial class TraceSettingsForm : Form
     {
         public IProjectDataService _project;

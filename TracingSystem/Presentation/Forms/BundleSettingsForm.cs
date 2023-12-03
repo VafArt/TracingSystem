@@ -12,6 +12,7 @@ using TracingSystem.Domain;
 
 namespace TracingSystem
 {
+    //класс формы для настройки расслоения
     public partial class BundleSettingsForm : Form
     {
         private readonly List<Trace> _traces;
@@ -37,6 +38,7 @@ namespace TracingSystem
 
         private Color _colorForSelecting;
 
+        //обработчик кнопки для выбора трасс на одном слое
         private void selectTracesButton1_Click(object sender, EventArgs e)
         {
             _isSelectMode = !_isSelectMode;
@@ -55,6 +57,7 @@ namespace TracingSystem
             }
         }
 
+        //обработчик события нажатия на трассу
         private void SelectTrace(object? sender, MouseEventArgs e)
         {
             var point = e.Location;
@@ -92,6 +95,7 @@ namespace TracingSystem
             }
         }
 
+        //проверяет находится ли точка внутри трассы
         private bool IsPointInsidePolyline(PointF point, List<PointF> polylinePoints, float lineWidth)
         {
             for (int i = 0; i < polylinePoints.Count - 1; i++)
@@ -121,6 +125,7 @@ namespace TracingSystem
             return false;
         }
 
+        //обработчик события нажатия на кнопку отмены выделения трасс в отдельный слой
         private void cancelTraces1_Click(object sender, EventArgs e)
         {
             //очистить список и закрасить все трассы красным
@@ -139,6 +144,7 @@ namespace TracingSystem
             }
         }
 
+        //обработчик события нажатия на кнопку добавления трасс, которые должны быть на рахных слоях
         private void selectTracesButton2_Click(object sender, EventArgs e)
         {
             _isSelectMode = !_isSelectMode;
@@ -157,6 +163,7 @@ namespace TracingSystem
             }
         }
 
+        //обработчик события нажатия на кнопку отмены выделения трасс в разные слои
         private void cancelTraces2_Click(object sender, EventArgs e)
         {
             //очистить список и закрасить все трассы красным
@@ -176,6 +183,7 @@ namespace TracingSystem
             }
         }
 
+        //кнопка закрывающая форму
         private void button2_Click(object sender, EventArgs e)
         {
             Close();

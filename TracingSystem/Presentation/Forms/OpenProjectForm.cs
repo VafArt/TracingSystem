@@ -16,6 +16,7 @@ using TracingSystem.Domain.Shared;
 
 namespace TracingSystem
 {
+    //форма для открытия проекта
     public partial class OpenProjectForm : Form
     {
         private readonly List<string> _projectNames;

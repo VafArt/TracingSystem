@@ -11,6 +11,7 @@ using TracingSystem.Application.Services;
 
 namespace TracingSystem
 {
+    //форма для ввода проектных данных
     public partial class PcbInfoForm : Form
     {
         public int PcbWidth { get; set; }

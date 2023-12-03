@@ -16,6 +16,7 @@ using TracingSystem.Persistance;
 
 namespace TracingSystem
 {
+    //форма для удаления проектов
     public partial class DeleteProjectForm : Form
     {
         private readonly ITracingSystemDbContext _dbContext;
@@ -46,6 +47,7 @@ namespace TracingSystem
             }
         }
 
+        //обработчик события нажатия на кнопку удаления проекта
         private async void DeleteProject_Click(object? sender, EventArgs args)
         {
             var projectToDeleteName = (sender as Button).Text;
